@@ -1,0 +1,51 @@
+// Connection Status Indicator Styles
+
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    margin-left: 8px;
+
+    .status-dot {
+        font-size: 8px;
+        line-height: 1;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-label {
+        font-weight: 500;
+        color: #666;
+    }
+
+    // Connection states
+    &.connected .status-dot {
+        animation: none;
+    }
+
+    &.connecting .status-dot,
+    &.reconnecting .status-dot {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    &.disconnected .status-dot,
+    &.failed .status-dot {
+        animation: none;
+    }
+}
+
+// Pulse animation for connecting states
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}

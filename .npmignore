@@ -1,0 +1,32 @@
+# Source files
+src/
+public/
+
+# Development files
+*.html
+test.html
+index.html
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+vite.config.ts
+vite-env.d.ts
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
