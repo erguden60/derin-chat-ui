@@ -4,6 +4,15 @@ Welcome to the definitive developer portal for **Derin Chat UI**. This documenta
 
 ---
 
+## ⚡ Zero-CSS Architecture
+
+**Important Note for Developers:** 
+Derin Chat UI uses a **Shadow DOM** to completely isolate its CSS. This means:
+1. **You DO NOT need to compile or import any CSS files** (e.g., `import 'derin-chat-ui/dist/style.css'` is **wrong**). The library automatically injects its own scoped styles directly into the shadow root.
+2. The widget will never break your host site's CSS, and your site's CSS will never break the widget.
+
+---
+
 ## 🚀 Quick Start (Vanilla JS)
 
 If you just need to drop the chat onto an existing HTML application:
@@ -11,7 +20,8 @@ If you just need to drop the chat onto an existing HTML application:
 ```html
 <!-- Include React/Preact (if not already bundled) -->
 <script type="module">
-  import { DerinChat } from 'https://unpkg.com/derin-chat-ui@latest/dist/index.js';
+  // We use a default export!
+  import DerinChat from 'https://unpkg.com/derin-chat-ui@latest/dist/index.js';
 
   DerinChat.init({
     apiUrl: 'https://api.yourbackend.com/v1/chat',
@@ -33,8 +43,10 @@ For React or Next.js projects, the widget mounts safely under `useEffect` preven
 ```tsx
 'use client'; // Required for Next.js App Router
 import { useEffect } from 'react';
-import { DerinChat } from 'derin-chat-ui';
-import 'derin-chat-ui/dist/index.css';
+
+// ⚠️ Correct usage: DerinChat is exported as the default module! 
+// ⚠️ Correct usage: DO NOT import any CSS files.
+import DerinChat from 'derin-chat-ui';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -51,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       }
     });
 
-    return () => DerinChat.destroy(); // Optional cleanup
+    return () => DerinChat.destroy(); // Optional cleanup when the component unmounts
   }, []);
 
   return <html><body>{children}</body></html>;
@@ -95,7 +107,7 @@ The `ChatConfig` powers every capability of `DerinChat.init()`. Here is an exten
 
 ### 2. UI & Theming (`ui`)
 
-The layout engine heavily utilizes CSS Variables under the hood, making specific theming effortless.
+The layout engine heavily utilizes CSS Variables inside its shadow root, making specific theming effortless.
 
 ```typescript
 {
