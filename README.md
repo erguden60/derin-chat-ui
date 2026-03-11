@@ -1,292 +1,230 @@
-# 💬 Derin Chat UI
+# Derin Chat UI - Complete Documentation Portal
 
-**Production-grade embeddable AI chat SDK.** Built for developers who need reliable, scalable, and highly customizable chat infrastructure with zero setup complexity.
-
-[![npm version](https://img.shields.io/npm/v/derin-chat-ui.svg)](https://www.npmjs.com/package/derin-chat-ui)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/derin-chat-ui)](https://bundlephobia.com/package/derin-chat-ui)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-
-> **📦 Current stable:** v1.0.8 | **🚀 Next milestone:** v1.1.0 - [see roadmap](#-developer-roadmap)
+Welcome to the definitive developer portal for **Derin Chat UI**. This documentation provides exhaustive detail on configurations, SDK hooks, theming, deployment modes, and custom data processing for the most demanding enterprise integrations.
 
 ---
 
-## ⚡ What Makes It Different?
+## 🚀 Quick Start (Vanilla JS)
 
-Derin Chat revolves around delivering an **unopinionated developer experience**. It is not just a UI widget; it is a full-fledged chat engine designed to plug into any backend infrastructure natively.
+If you just need to drop the chat onto an existing HTML application:
 
-- 🎯 **Framework-agnostic** - Native integration with HTML/JS, React, Vue, Next.js, or Svelte.
-- 🔌 **Protocol flexible** - Ships with `HTTP REST`, `WebSocket` (with exponential backoff reconnects), or pure headless `Mock Handler` layers.
-- 🌊 **AI Streaming (SSE)** - Real-time typewriter effect built straight into the core.
-- 🎙️ **Voice Assistant (v1.0.8)** - Native Speech-to-Text and Text-to-Speech integration without external dependencies.
-- 🎨 **Shadow DOM Isolated** - Zero CSS bleed. Your app styles won't break the widget, and the widget won't break your app.
-- 📦 **Lightweight** - ~20KB gzipped including Preact engine.
+```html
+<!-- Include React/Preact (if not already bundled) -->
+<script type="module">
+  import { DerinChat } from 'https://unpkg.com/derin-chat-ui@latest/dist/index.js';
 
----
-
-## 🚀 Quick Start
-
-### 1. Installation
-
-Install via npm, yarn, or pnpm:
-
-```bash
-npm install derin-chat-ui
-# or
-yarn add derin-chat-ui
-# or
-pnpm add derin-chat-ui
+  DerinChat.init({
+    apiUrl: 'https://api.yourbackend.com/v1/chat',
+    ui: {
+      theme: 'auto',
+      colors: { primary: '#60A5FA' },
+      texts: { title: 'Acme Support' }
+    }
+  });
+</script>
 ```
 
-### 2. Usage Examples
+---
 
-Derin Chat is designed to work everywhere. Pick your flavor:
+## 💻 React / Next.js Integration
 
-#### Next.js / React
+For React or Next.js projects, the widget mounts safely under `useEffect` preventing SSR hydration mismatches:
+
 ```tsx
-'use client';
-
+'use client'; // Required for Next.js App Router
 import { useEffect } from 'react';
-import DerinChat from 'derin-chat-ui';
+import { DerinChat } from 'derin-chat-ui';
+import 'derin-chat-ui/dist/index.css';
 
-export default function ChatWidget() {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     DerinChat.init({
-      apiUrl: 'https://api.example.com/chat',
-      user: { id: 'user-123', name: 'John Doe' },
+      apiUrl: '/api/chat',
       features: {
-        voice: { input: true, output: true, language: 'en-US' }
+        voice: { input: true, output: true, language: 'en-US' },
+        messageTools: true,
+        fileUpload: true
+      },
+      ui: {
+        theme: 'dark',
+        position: 'bottom-right'
       }
     });
 
-    return () => DerinChat.destroy();
+    return () => DerinChat.destroy(); // Optional cleanup
   }, []);
 
-  return null;
+  return <html><body>{children}</body></html>;
 }
 ```
 
-#### Vanilla JS / HTML (via CDN)
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Chat Demo</title>
-</head>
-<body>
-    <!-- Import the UMD build -->
-    <script src="https://unpkg.com/derin-chat-ui/dist/index.umd.js"></script>
-    <script>
-      window.DerinChat.init({
-        apiUrl: 'https://api.example.com/chat',
-        ui: {
-          theme: 'dark',
-          colors: { primary: '#4F46E5' }
-        }
-      });
-    </script>
-</body>
-</html>
-```
-
-#### Vue.js
-```vue
-<script setup>
-import { onMounted, onUnmounted } from 'vue'
-import DerinChat from 'derin-chat-ui'
-
-onMounted(() => {
-  DerinChat.init({
-    apiUrl: 'https://api.example.com/chat'
-  })
-})
-
-onUnmounted(() => {
-  DerinChat.destroy()
-})
-</script>
-
-<template>
-  <div>Your App Layout</div>
-</template>
-```
-
 ---
 
-## 🛠 Complete Configuration API (Props)
+## ⚙️ Configuration Object (Reference)
 
-The `DerinChat.init(config)` method accepts a highly customizable configuration object:
+The `ChatConfig` powers every capability of `DerinChat.init()`. Here is an extensive breakdown:
 
-### `apiUrl` & `connection` (Networking)
-Define how the chat talks to your backend.
-```javascript
-DerinChat.init({
-  // Basic HTTP POST setup
-  apiUrl: 'https://api.example.com/chat',
+### 1. Networking (`apiUrl`, `connection`, `mock`)
+
+```typescript
+{
+  apiUrl: 'https://...', // Primary endpoint for HTTP/SSE
+  apiKey: 'sk-...',      // Passed as Bearer Token implicitly
   
-  // Or Advanced WebSocket / SSE definition
+  // Connection Modes
   connection: {
-    mode: 'websocket', // 'http' | 'websocket' | 'auto'
-    stream: true,      // Enable SSE character streaming
-    websocket: {
-      url: 'wss://api.example.com/ws',
-      reconnect: true,
-      headers: { Authorization: `Bearer ${token}` }
+    mode: 'auto',        // 'http' | 'websocket' | 'auto'. 'auto' tries WS, falls back to HTTP.
+    stream: true,        // Enable Server-Sent Events (SSE) streaming
+    config: {
+      reconnectTime: 3000,
+      maxAttempts: 5,
+      pingInterval: 30000 
     }
-  }
-});
-```
+  },
 
-### `ui` (Theming & Texts)
-Controls the look, feel, and i18n vocabulary.
-```javascript
-DerinChat.init({
-  ui: {
-    theme: 'auto', // 'light' | 'dark' | 'auto'
-    position: 'bottom-right',
-    layout: 'normal', // 'normal' | 'compact' | 'full-screen'
-    colors: {
-      primary: '#3B82F6',
-      botMessageBg: '#E5E7EB',
-      botMessageText: '#1F2937',
-      // ...and many more
-    },
-    texts: {
-      title: 'Support AI',
-      subtitle: 'Typically replies in seconds',
-      placeholder: 'Type your message...',
-      // Override default English texts for full i18n support
-    }
-  }
-});
-```
-
-### `features` (Capabilities)
-Toggle features on or off. By default, everything is customizable.
-```javascript
-DerinChat.init({
-  features: {
-    images: true,          // Inline image rendering
-    quickReplies: true,    // Guided predefined inputs
-    agentMode: true,       // Human handoff indicators
-    markdown: true,        // XSS-Safe markdown parsing
-    fileUpload: true,      // File/Image upload support
-    timestamps: true,      // Message timestamps
-    avatars: true,         // Entity identifiers
-    messageTools: true,    // Copy & Feedback buttons on messages
-    voice: {               // Native voice assistant
-      input: true,         
-      output: true,        
-      language: 'en-US'   
-    }
-  }
-});
-```
-
-### `user` (Identity & Auth)
-Pass identity data to your backend safely.
-```javascript
-DerinChat.init({
-  user: {
-    id: 'user_98765',
-    name: 'Alice Smith',
-    avatar: 'https://example.com/avatar.png',
-    hash: 'hmac_sha256_hash_here', // Use for secure identity verification
-    metadata: { tier: 'pro', source: 'landing_page' }
-  }
-});
-```
-
-### `Event Hooks` (Callbacks)
-Hook into the conversation lifecycle to trigger analytics, tracking, or side-effects.
-```javascript
-DerinChat.init({
-  onMessageSent: (message) => console.log('User said:', message),
-  onMessageReceived: (res) => console.log('Bot replied:', res),
-  onChatOpened: () => console.log('Widget opened'),
-  onFeedback: (messageId, type) => sendToAnalytics(messageId, type), // type: 'positive' | 'negative'
-  onMessageCopy: (messageId, text) => console.log('Copied:', text),
-  onError: (err) => console.error('Chat error:', err)
-});
-```
-
----
-
-## 💻 Headless Mode (Mock/Testing)
-
-Building a UI but backend isn't ready? Intercept all network traffic locally. This bypasses the API completely:
-
-```javascript
-DerinChat.init({
+  // Mocking (Offline Dev Mode)
   mock: {
     handler: async (message, context) => {
-      // Simulate network delay
-      await new Promise(r => setTimeout(r, 1000));
-      
-      // Return mocked response
-      return {
-        reply: `You said: ${message}`,
-        quickReplies: [{ title: 'Tell me more', payload: 'more' }]
-      };
+      // Access history, user info, and attachments
+      console.log(context.history);
+      return `Mock Backend Received: ${message}`;
     }
   }
-});
+}
+```
+
+### 2. UI & Theming (`ui`)
+
+The layout engine heavily utilizes CSS Variables under the hood, making specific theming effortless.
+
+```typescript
+{
+  ui: {
+    theme: 'auto', // 'light' | 'dark' | 'auto' (respects OS scheme)
+    layout: 'normal', // 'normal' | 'compact' | 'full-screen'
+    position: 'bottom-right', 
+    zIndex: 99999,
+    fontFamily: '"Geist", "Inter", sans-serif',
+    logo: 'https://mycdn.com/logo.png',
+
+    colors: {
+      primary: '#4F46E5',         // Drives button colors and overall tint
+      headerBg: '#1e1e24',        // Forced header background
+      headerText: '#ffffff',      // Header text
+      userMessageBg: '#4F46E5',   // User text bubble background
+      userMessageText: '#ffffff', // User text color
+      botMessageBg: '#f3f4f6',    // Bot bubble
+      botMessageText: '#1f2937',  // Bot text
+      background: '#ffffff',      // Entire chat window body
+      inputBg: '#f9fafb',         // Text input bar
+      inputText: '#111827'        // Text typing color
+    },
+
+    texts: {
+      title: 'Customer Service',
+      subtitle: 'We usually respond in 2m',
+      placeholder: 'Type your message...',
+      sendButton: 'Send',
+      loading: 'Agent is typing...',
+      errorMessage: 'Network error. Attempting reconnect...',
+      openChat: 'Open Support',
+      closeChat: 'Close'
+    }
+  }
+}
+```
+
+### 3. Feature Flags (`features`)
+
+Toggle specific UI logic and UX capabilities.
+
+```typescript
+{
+  features: {
+    images: true,        // Allow images from bot responses
+    quickReplies: true,  // Allow structured quick reply buttons
+    markdown: true,      // Turn bold, italic, code strings into DOM nodes
+    fileUpload: true,    // Shows paperclip icon
+    timestamps: true,    // Displays hours:minutes under bubbles
+    avatars: true,       // Shows Bot avatar on the left margin
+    messageTools: true,  // Advanced UI block for Copy/Regenerate/Feedback
+
+    voice: {
+      input: true,           // Microphone icon for dictation
+      output: true,          // Speaker icon to read agent messages
+      language: 'tr-TR',     // Locale dictation/voice target
+      voiceName: 'Microsoft Tolga' // Forced OS Voice Engine if found
+    }
+  }
+}
+```
+
+### 4. User Identity (`user`)
+
+Pass critical identifiers to tie SDK sessions to your actual Auth accounts.
+
+```typescript
+{
+  user: {
+    id: 'usr_12345',
+    name: 'John Doe',
+    avatar: 'https://.../avatar.png',
+    hash: '0xabc123...', // Use HMAC signing to securely authenticate in WS connections
+    metadata: {
+      plan: 'premium',
+      deviceOS: 'iOS'
+    }
+  }
+}
+```
+
+### 5. Event Callbacks (Hooks)
+
+Tie the SDK's lifecycle events directly into your overarching metrics/analytics setup.
+
+```typescript
+{
+  onChatOpened: () => console.log('Chat opened'),
+  onChatClosed: () => console.log('Chat closed'),
+  onMessageSent: (msg) => tracking.track('MESSAGE_SENT', { msg }),
+  onMessageReceived: (apiObj) => tracking.track('MESSAGE_RECEIVED'),
+  onMessageCopy: (id, text) => clipboardMetrics.record(id),
+  onFeedback: (id, type) => backend.post('/feedback', { id, type }), // type: 'positive' | 'negative'
+  onChatClear: () => console.log('User wiped their SDK history'),
+  
+  onConnectionChange: (status) => console.log(`WebSocket Status: ${status}`),
+  onVoiceError: (err) => console.error(`Mic permission denied: ${err}`)
+}
 ```
 
 ---
 
-## 🛠 Local Development (Contributing)
+## 🌩️ Advanced Integration Concepts
 
-Want to contribute or build your own flavor? 
+### File Uploads & Interceptors
+If `features.fileUpload` is enabled, any file chosen via the widget converts via `FileReader` into Base64 format. The SDK attaches this as:
+```json
+{
+  "message": "Can you summarize this?",
+  "file": {
+    "name": "report.pdf",
+    "type": "application/pdf",
+    "size": 1024500,
+    "data": "data:application/pdf;base64,...(blob)..."
+  }
+}
+```
+*Note: Depending on server ingress limits, chunking base64 over WS may be necessary if payload exceeds 1MB buffer.*
 
-1. **Clone & Install**
-   ```bash
-   git clone https://github.com/erguden60/derin-chat-ui.git
-   cd derin-chat-ui
-   npm install
-   ```
-
-2. **Start Dev Server**
-   ```bash
-   npm run dev
-   ```
-   This spins up the Vite development server with the playground app (`src/demo`).
-
-3. **Build the Package**
-   ```bash
-   npm run build
-   ```
-
----
-
-## 🗺 Developer Roadmap
-
-We are constantly aiming to evolve Derin Chat into the de-facto open-source chatbot SDK. Here is where the project is heading:
-
-### ✅ **Phase 1: Foundation (v1.0.0 - v1.0.7)**
-- Baseline UI widget, Shadow DOM isolation.
-- HTTP & WebSocket connectivity mechanisms.
-- Essential message tooling: Attachments, Quick Replies, Unread Badges.
-
-### 🎙️ **Phase 2: Experience Augmentation (v1.0.8 - Present)**
-- **Voice Capabilities:** Native Speech-to-Text inference and Text-to-Speech readouts.
-- **Message Action Layers:** Feedback (Up/Down vote), Copy handling, Clear Context history capabilities.
-- **AI Streaming Layer:** Chunked response handling (SSE). 
-
-### 🏗 **Phase 3: The "Enterprise" Update (Upcoming - v1.1.0 / v2.0.0)**
-- **Context Viz Engine:** Multi-turn session visualization tools for AI context tracing.
-- **Custom Render Hooks:** Ability to pass custom JSX/HTML render functions for deeply custom message bubbles (e.g. rendering interactive charts).
-- **Multi-Instance Support:** Render multiple isolated widgets on the same domain effortlessly.
-- **Analytics Bridges:** Out-of-the-box hooks for tracking token burn, user drop-offs, and interaction depths.
+### Real-Time Telemetry (SSE/Streaming)
+When `connection.stream: true`, the SDK immediately appends an empty bot bubble to the DOM. It issues an HTTP POST where `stream: true` is enforced in the payload. The widget opens a standard Fetch ReadableStream. It anticipates traditional Server Sent Event format:
+```text
+data: {"text": "I can"}
+data: {"text": " help with"}
+data: {"text": " that!"}
+data: [DONE]
+```
+Text updates lazily flush to the preact hook system, skipping Markdown rerenders until typing pauses or parsing boundaries are resolved automatically.
 
 ---
-
-## 👨‍💻 Community & Contributions
-
-Derin Chat thrives on developer feedback. Have a feature request, want to add a new theme, or found a core issue?
-
-- [Drop an Issue](https://github.com/erguden60/derin-chat-ui/issues)
-- [Start a Discussion](https://github.com/erguden60/derin-chat-ui/discussions)
-
-**Built for builders.** 
-> MIT License © 2026 Emirhan Ergüden
+*Created and Maintained strictly for developer references.*
