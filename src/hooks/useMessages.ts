@@ -33,8 +33,8 @@ export function useMessages({ initialMessages, maxMessages = 100 }: UseMessagesO
     });
   };
 
-  const clearMessages = () => {
-    setMessages(initialMessages);
+  const clearMessages = (fallback?: Message[]) => {
+    setMessages(fallback || initialMessages);
   };
 
   const createUserMessage = (

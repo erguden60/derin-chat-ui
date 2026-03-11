@@ -58,9 +58,20 @@ export function App({ config }: AppProps) {
 
   const toggleChat = () => setIsOpen(!isOpen);
 
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: 'intro',
+        text: `Hello${config.user?.name ? ' ' + config.user.name : ''}!`,
+        sender: 'bot',
+        timestamp: new Date(),
+      },
+    ]);
+  };
+
   // --- SEND LOGIC (MOCK vs REAL) ---
   const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!(inputValue || '').trim() || isLoading) return;
 
     // 1. Add user message
     const userText = inputValue;
@@ -169,9 +180,14 @@ export function App({ config }: AppProps) {
               <span class="status-indicator">{isLoading ? texts.loading : texts.subtitle}</span>
             </div>
           </div>
-          <button class="close-btn" onClick={toggleChat}>
-            <CloseIcon />
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button class="close-btn" onClick={handleClearChat} aria-label="Clear chat" title="Clear chat History" style={{ opacity: 0.7 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+            <button class="close-btn" onClick={toggleChat}>
+              <CloseIcon />
+            </button>
+          </div>
         </div>
 
         {/* Mesajlar */}
@@ -194,7 +210,7 @@ export function App({ config }: AppProps) {
             onInput={(e) => setInputValue(e.currentTarget.value)}
             onKeyPress={handleKeyPress}
           />
-          <button onClick={handleSend} disabled={!inputValue.trim()}>
+          <button onClick={handleSend} disabled={!(inputValue || '').trim()}>
             <SendIcon />
           </button>
         </div>

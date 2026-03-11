@@ -41,6 +41,13 @@ export function useChatState(config: Required<ChatConfig>) {
     maxMessages: config.behavior.maxMessages,
   });
 
+  const generateIntroMessage = () => [{
+    id: 'intro',
+    text: `Hello${config.user?.name ? ' ' + config.user.name : ''}!`,
+    sender: 'bot' as const,
+    timestamp: new Date().toISOString(),
+  }];
+
   // Persistence
   usePersistence({
     enabled: Boolean(config.behavior.persistSession),
@@ -112,53 +119,77 @@ export function useChatState(config: Required<ChatConfig>) {
     }
   }, [isOpen]); // Only depend on isOpen, not unreadCount or config
 
-
   // Send message handler
   const handleSend = async () => {
-    if ((!inputValue.trim() && !fileAttachment) || isLoading) return;
+    if (!(inputValue || '').trim() && !fileAttachment || isLoading) return;
 
-    const userText = inputValue || (fileAttachment ? `[File: ${fileAttachment.file.name}]` : '');
-
-    // Create and add user message
-    const userMessage = createUserMessage(userText, {
+    const currentInput = inputValue || (fileAttachment ? `[File: ${fileAttachment.file.name}]` : '');
+    const userMessage = createUserMessage(currentInput, {
       ...(fileAttachment?.type === 'image' && fileAttachment.preview
-        ? {
-          image: { url: fileAttachment.preview, alt: fileAttachment.file.name },
-        }
+        ? { image: { url: fileAttachment.preview, alt: fileAttachment.file.name } }
         : {}),
       ...(fileAttachment && fileAttachment.type !== 'image'
         ? {
-          file: {
-            url: fileAttachment.preview || '',
-            name: fileAttachment.file.name,
-            size: fileAttachment.file.size,
-            type: fileAttachment.type,
-          },
-        }
+            file: {
+              url: fileAttachment.preview || '',
+              name: fileAttachment.file.name,
+              size: fileAttachment.file.size,
+              type: fileAttachment.type,
+            },
+          }
         : {}),
     });
 
     addMessage(userMessage);
     setInputValue('');
-    setFileAttachment(undefined);
+    setFileAttachment(undefined); // Clear file after sending
 
-    // Call event hook
-    config.onMessageSent?.(userText);
-
-    // Send to backend
-    await sendUserMessage(userText, fileAttachment);
+    config.onMessageSent?.(currentInput);
+    await sendUserMessage(currentInput, fileAttachment);
   };
 
-  const handleQuickReply = (value: string) => {
-    setInputValue(value);
+  const handleQuickReply = (reply: any) => {
+    if (!reply || typeof reply !== 'string') return;
+    setInputValue(reply);
     setTimeout(() => handleSend(), 100);
   };
 
   const handleCopy = (messageId: string, text: string) => {
-    navigator.clipboard.writeText(text).catch(err => {
-      console.error('Failed to copy text: ', err);
-    });
-    config.onMessageCopy?.(messageId, text);
+    let copied = false;
+
+    // 1. Try modern clipboard API
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        if (!copied) {
+          copied = true;
+          config.onMessageCopy?.(messageId, text);
+        }
+      }).catch((error) => {
+        console.error('Clipboard API failed: ', error);
+      });
+    }
+
+    // 2. Synchronous fallback (essential for some environments to catch the original click event)
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const success = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      
+      if (success && !copied) {
+        copied = true;
+        config.onMessageCopy?.(messageId, text);
+      }
+    } catch (error) {
+      console.warn('Fallback copy failed: ', error);
+    }
   };
 
   const handleFeedback = (messageId: string, type: 'positive' | 'negative') => {
@@ -167,7 +198,7 @@ export function useChatState(config: Required<ChatConfig>) {
   };
 
   const handleClearChat = () => {
-    clearMessages();
+    clearMessages(generateIntroMessage());
     config.onChatClear?.();
   };
 

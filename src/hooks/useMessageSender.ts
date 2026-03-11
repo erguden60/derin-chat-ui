@@ -247,11 +247,11 @@ export function useMessageSender({
                 // Parse SSE "data: ..." format
                 const lines = chunk.split('\n');
                 for (const line of lines) {
-                  if (line.trim() === 'data: [DONE]') continue;
+                  if ((line || '').trim() === 'data: [DONE]') continue;
                   if (line.startsWith('data: ')) {
                      try {
                         const jsonStr = line.replace('data: ', '');
-                        if (!jsonStr.trim()) continue;
+                        if (!(jsonStr || '').trim()) continue;
                         const parsed = JSON.parse(jsonStr);
                         // Extract text (support OpenAI standard delta.content or our custom reply)
                         const token = parsed.choices?.[0]?.delta?.content || parsed.reply || parsed.text || '';
@@ -259,7 +259,7 @@ export function useMessageSender({
                      } catch(e) { /* ignore parse errors for partial chunks */ }
                   } else {
                      // If it's not SSE format, maybe it's just raw text chunks being flushed
-                     if (chunk.trim() && !chunk.includes('data:')) {
+                     if ((chunk || '').trim() && !chunk.includes('data:')) {
                         // Assuming raw text flush
                         // We do a safer assignment here to prevent duplicate appends on same chunk
                      }

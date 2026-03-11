@@ -33,7 +33,7 @@ export function parseMarkdown(text: string): string {
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text, url) => {
     // Only allow safe protocols
     const safeProtocols = /^(https?:\/\/|mailto:)/i;
-    if (safeProtocols.test(url.trim())) {
+    if (typeof url === 'string' && safeProtocols.test(url.trim())) {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
     }
     // If protocol is not safe, render as plain text

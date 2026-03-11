@@ -1,6 +1,6 @@
 {
   "name": "derin-chat-ui",
-  "version": "1.0.8",
+  "version": "1.0.10",
   "description": "Production-grade embeddable AI chat SDK - Built for developers who need reliable chat infrastructure",
   "type": "module",
   "main": "./dist/index.cjs",

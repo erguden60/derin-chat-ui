@@ -3,7 +3,7 @@
 import type { Message, ChatConfig } from '../types';
 import { QuickReplies } from './QuickReplies';
 import { parseMarkdown } from '../utils/markdown';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { SpeakerIcon } from '../icons';
 
 interface MessageProps {
@@ -27,6 +27,11 @@ export function MessageComponent({
   const isAgent = message.sender === 'agent';
   const showAvatar = config.features.avatars && (isAgent || message.agent);
   const showTimestamp = config.features.timestamps;
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleQuickReply = (reply: any) => {
     if (onQuickReplySelect && reply?.value) {
@@ -171,10 +176,10 @@ export function MessageComponent({
 
         {showTimestamp && (
           <div class="message-timestamp">
-            {new Date(message.timestamp).toLocaleTimeString('tr-TR', {
+            {mounted ? new Date(message.timestamp).toLocaleTimeString('tr-TR', {
               hour: '2-digit',
               minute: '2-digit',
-            })}
+            }) : ''}
           </div>
         )}
 

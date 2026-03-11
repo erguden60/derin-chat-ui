@@ -11,7 +11,7 @@ export class ConfigError extends Error {
 
 export function validateConfig(config: ChatConfig): void {
   // Check if apiUrl is explicitly provided but empty
-  if (config.apiUrl !== undefined && config.apiUrl !== null) {
+  if (config.apiUrl !== undefined && config.apiUrl !== null && typeof config.apiUrl === 'string') {
     const trimmedUrl = config.apiUrl.trim();
     
     if (!trimmedUrl) {

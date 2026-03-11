@@ -51,7 +51,7 @@ export function ChatInput({
     onChange(newValue);
   };
 
-  const canSend = (value.trim() || fileAttachment) && !disabled;
+  const canSend = ((value || '').trim() || fileAttachment) && !disabled;
 
   return (
     <div class="chat-input-wrapper">
