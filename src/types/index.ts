@@ -64,6 +64,7 @@ export interface ChatConfig {
       input?: boolean; // Enable microphone for Speech-to-Text
       output?: boolean; // Enable speaker icon on bot messages for Text-to-Speech
       language?: string; // Default language for recognition/synthesis (e.g., 'tr-TR', 'en-US')
+      voiceName?: string; // Optional precise internal voice name to use (e.g. 'Yelda', 'Microsoft Tolga')
     };
   };
 

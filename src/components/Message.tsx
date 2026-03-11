@@ -29,7 +29,7 @@ export function MessageComponent({
   const showTimestamp = config.features.timestamps;
 
   const handleQuickReply = (reply: any) => {
-    if (onQuickReplySelect) {
+    if (onQuickReplySelect && reply?.value) {
       onQuickReplySelect(reply.value);
     }
   };
@@ -61,25 +61,62 @@ export function MessageComponent({
       return;
     }
 
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
+    const speak = () => {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(message.text);
+      
+      const targetLang = config.features.voice?.language || 'en-US';
+      utterance.lang = targetLang;
 
-    // Create a new utterance
-    const utterance = new SpeechSynthesisUtterance(message.text);
-    
-    // Set language if configured
-    if (config.features.voice?.language) {
-      utterance.lang = config.features.voice.language;
-    }
+      const voices = window.speechSynthesis.getVoices();
+      let selectedVoice: SpeechSynthesisVoice | undefined;
 
-    utterance.onstart = () => setIsPlaying(true);
-    utterance.onend = () => setIsPlaying(false);
-    utterance.onerror = (e) => {
-      console.error('Text-to-Speech error', e);
-      setIsPlaying(false);
+      if (config.features.voice?.voiceName && voices.length > 0) {
+        const targetName = config.features.voice.voiceName.toLowerCase();
+        selectedVoice = voices.find(v => v.name.toLowerCase().includes(targetName));
+      }
+
+      if (!selectedVoice && voices.length > 0) {
+        const langPrefix = targetLang.split('-')[0].toLowerCase();
+        const matchingVoices = voices.filter(v => 
+          v.lang.toLowerCase().startsWith(langPrefix)
+        );
+
+        if (matchingVoices.length > 0) {
+          const premiumVoice = matchingVoices.find(v => 
+            v.name.includes('Google') || 
+            v.name.includes('Microsoft') || 
+            v.name.includes('Apple') || 
+            v.localService
+          );
+          selectedVoice = premiumVoice || matchingVoices[0];
+        }
+      }
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.onstart = () => setIsPlaying(true);
+      utterance.onend = () => setIsPlaying(false);
+      utterance.onerror = (e) => {
+        console.error('Text-to-Speech error', e);
+        setIsPlaying(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
     };
 
-    window.speechSynthesis.speak(utterance);
+    // Chrome/Linux bug: getVoices() might be empty initially
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        speak();
+        // Remove listener to prevent multiple triggers
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    } else {
+      speak();
+    }
   };
 
   return (

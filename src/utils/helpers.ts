@@ -28,7 +28,14 @@ function deepMerge<T>(target: T, source: Partial<T>): T {
 
 // Config merge with defaults
 export function mergeConfig(userConfig: ChatConfig): Required<ChatConfig> {
-  return deepMerge(DEFAULT_CONFIG as any, userConfig) as Required<ChatConfig>;
+  const merged = deepMerge(DEFAULT_CONFIG as any, userConfig) as Required<ChatConfig>;
+  
+  // Set default voice language dynamically if voice features are enabled
+  if (merged.features?.voice) {
+    merged.features.voice.language = merged.features.voice.language || 'en-US';
+  }
+  
+  return merged;
 }
 
 // Generate unique ID

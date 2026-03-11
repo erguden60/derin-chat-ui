@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Derin E-Ticaret Asistanı Testi</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0;
+      margin: 0;
+      background: #f0f2f5;
+    }
+    .header {
+      background: #1a1a2e;
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .status { 
+      padding: 12px; 
+      margin: 15px 0;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .feature-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .feature-list li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🛍️ Derin E-Ticaret</h1>
+    <div>Destek Test Ortamı</div>
+  </div>
+
+  <div class="container">
+    <h2>🧪 DerinChat UI Kapsamlı Test Sayfası</h2>
+    <p>Tüm UI yeteneklerini test etmek üzere kurgulanmış <strong>E-Ticaret</strong> simülasyonu.</p>
+    
+    <div id="status" class="status">Yükleniyor...</div>
+    
+    <h3>Test Edilen Özellikler:</h3>
+    <ul class="feature-list">
+      <li>✅ <strong>Markdown & Resimler:</strong> Bot ürün resimleri ve kalın yazılar gönderebilir.</li>
+      <li>✅ <strong>Hızlı Yanıtlar (Quick Replies):</strong> Sipariş ve kargo seçenekleri.</li>
+      <li>✅ <strong>Sesli Asistan (TTS & STT):</strong> Türkçe sesli asistan okuma (Hoparlör ikonu).</li>
+      <li>✅ <strong>Dosya Yükleme:</strong> Müşteri dekont veya hasarlı ürün görseli atabilir.</li>
+      <li>✅ <strong>Sohbeti Temizle:</strong> Sağ üstteki çöp kutusu ikonu ile hafızayı sıfırlama.</li>
+      <li>✅ <strong>Bot Animasyonları:</strong> Gecikmeli "Yazıyor..." simülasyonu.</li>
+    </ul>
+
+    <p><em>İpucu: Sağ alt köşedeki sohbet penceresini açarak test etmeye başlayın. Sohbeti sıfırlamak için çöp kutusu ikonunu, botun mesajını sesli dinlemek için hoparlör ikonunu kullanın.</em></p>
+  </div>
+
+  <!-- DerinChat Widget Host -->
+  <div id="derin-chat"></div>
+
+  <!-- UMD Build - Bundle -->
+  <script src="./dist/index.umd.js"></script>
+  
+  <script>
+    try {
+      DerinChat.init({
+        // Sahte API URL'si, Mock devrede olduğu için request atılmaz.
+        apiUrl: 'https://api.derin-eticaret.com/v1/chat',
+        
+        user: {
+          id: 'USR-98765',
+          name: 'Ahmet Yılmaz',
+          avatar: 'https://ui-avatars.com/api/?name=Ahmet+Yilmaz&background=random'
+        },
+
+        ui: {
+          title: 'Derin Destek',
+          subtitle: '7/24 E-Ticaret Asistanı',
+          theme: 'light',
+          position: 'bottom-right',
+          logo: 'https://ui-avatars.com/api/?name=Destek&background=2563eb&color=fff',
+          colors: {
+            primary: '#2563eb', // Mavi tema
+          },
+          texts: {
+            placeholder: 'Siparişinizle ilgili sorunuzu yazın...',
+            sendButton: 'Gönder',
+            loading: 'Destek ekibi yazıyor...',
+            openChat: 'Sohbeti Aç',
+            closeChat: 'Sohbeti Kapat'
+          }
+        },
+        
+        features: {
+          markdown: true,
+          quickReplies: true,
+          fileUpload: true,
+          images: true,
+          timestamps: true,
+          avatars: true,
+          agentMode: true,
+          messageTools: true,
+          voice: {
+            input: true,
+            output: true,
+            language: 'tr-TR' // Türkçe Seslendirme
+          }
+        },
+        
+        behavior: {
+          openOnLoad: true,
+          persistSession: true, // Test: Refresh atınca sohbet kalmalı
+        },
+
+        // Mock Handler (E-Ticaret Senaryosu)
+        mock: {
+          handler: (message, context) => {
+            console.log('Kullanıcı Mesajı Alındı:', message, 'Dosya:', context.file);
+
+            return new Promise((resolve) => {
+              const lowerMsg = message.toLowerCase();
+              let replyText = '';
+              let quickReplies = null;
+              let image = null;
+
+              // Routing logic
+              if (lowerMsg.includes('kargo') || lowerMsg.includes('nerede')) {
+                replyText = '📦 **Siparişiniz yolda!**\n\nTX-9821 numaralı kargonuz şu an **İstanbul Transfer Merkezinde** görünmektedir. Tahmini teslimat süresi: *Yarın 14:00 - 18:00* arasıdır.';
+                quickReplies = [
+                  { label: '🚚 Kargo Takip Linki İstiyorum', value: 'Takip linki ver' },
+                  { label: '❌ Siparişi İptal Et', value: 'Siparişi iptal etmek istiyorum' }
+                ];
+              } 
+              else if (lowerMsg.includes('iptal') || lowerMsg.includes('iade')) {
+                replyText = 'Siparişiniz kargoya verildiği için şu an iptal edemiyoruz. Ancak paket size ulaştığında **ücretsiz iade kodu: TR-IADE-55** ile geri gönderebilirsiniz. 🔄';
+                quickReplies = [
+                  { label: 'Asistan ile görüş', value: 'Müşteri temsilcisine bağlan' },
+                  { label: 'Anasayfaya dön', value: 'Teşekkürler' }
+                ];
+              }
+              else if (lowerMsg.includes('öner') || lowerMsg.includes('telefon') || lowerMsg.includes('ürün')) {
+                replyText = 'Sizin için harika bir önerim var! 📱 **Yeni Nesil Akıllı Telefon Pro Max** modelimiz şu an %15 indirimde.\n\n- 256GB Hafıza\n- 48MP Kamera\n- 2 Yıl Garanti';
+                image = {
+                  url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=600&auto=format&fit=crop',
+                  alt: 'Akıllı Telefon',
+                  width: 300
+                };
+                quickReplies = [
+                  { label: '🛒 Sepete Ekle', value: 'Sepete ekle' },
+                  { label: 'Başka ürün göster', value: 'Bana başka bir telefon öner' }
+                ];
+              }
+              else if (context.file) {
+                 replyText = `📄 Gönderdiğiniz **${context.file.name}** isimli dosyayı başarıyla teslim aldık (Boyut: ${(context.file.size/1024).toFixed(1)} KB). İnceleme ekibimiz belgeyi doğruladıktan sonra size dönüş yapacaktır.`;
+              }
+              else {
+                replyText = `Merhaba ${context.user?.name || 'Değerli Müşterimiz'} 👋, Derin E-Ticaret asistanına hoş geldiniz.\n\nSize nasıl yardımcı olabilirim?`;
+                quickReplies = [
+                  { label: '📦 Kargom Nerede?', value: 'Kargom nerede?' },
+                  { label: '🔄 İade Şartları', value: 'İade yapmak istiyorum' },
+                  { label: '🛍️ Ürün Önerisi', value: 'Bana bir telefon öner' }
+                ];
+              }
+
+              // Simulating network delay (1.5s - 2.5s)
+              const delay = Math.floor(Math.random() * 1000) + 1500;
+              
+              setTimeout(() => {
+                const responseObj = {
+                  id: 'msg-' + Date.now(),
+                  text: replyText,
+                  sender: 'agent',
+                  timestamp: new Date().toISOString(),
+                  agent: {
+                    name: 'E-Ticaret Asistanı',
+                    avatar: 'https://ui-avatars.com/api/?name=Asistan&background=2563eb&color=fff'
+                  }
+                };
+                
+                if (quickReplies) responseObj.quickReplies = quickReplies;
+                if (image) responseObj.image = image;
+
+                resolve(responseObj);
+                console.log('🤖 Bot Yanıtı:', responseObj);
+              }, delay);
+            });
+          }
+        },
+
+        onMessageSent: function(message) {
+          console.log('✅ UI: Mesaj gönderildi ->', message);
+        },
+        
+        onChatClear: function() {
+          console.log('🗑️ UI: Sohbet geçmişi kullanıcı tarafından temizlendi.');
+        },
+        
+        onError: function(error) {
+          console.error('❌ Hata yakalandı:', error);
+          document.getElementById('status').innerHTML = 
+            '<span class="error">❌ HATA: ' + error.message + '</span>';
+        }
+      });
+      
+      document.getElementById('status').innerHTML = 
+        '<span class="success">✅ Chat başarıyla yüklendi! Sağ alttaki ikona tıklayarak test edebilirsiniz.</span>';
+
+    } catch (error) {
+      console.error('💥 Chat yükleme hatası:', error);
+      document.getElementById('status').innerHTML = 
+        '<span class="error">❌ Yükleme hatası: ' + error.message + '</span>';
+    }
+  </script>
+</body>
+</html>
