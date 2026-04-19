@@ -6,7 +6,7 @@ import { WebSocketManager } from '../utils/websocket';
 
 interface UseWebSocketOptions {
     config: Required<ChatConfig>;
-    onMessage?: (data: any) => void;
+    onMessage?: (data: unknown) => void;
     enabled: boolean; // Only create WebSocket if enabled
 }
 

@@ -8,6 +8,7 @@ import type {
   MockHandlerResult,
   MockHandlerContext,
   ConnectionStatus,
+  ApiResponse,
 } from '../types';
 import type { FileAttachment } from '../components/FileUpload';
 import { sendMessage } from '../utils/api';
@@ -17,29 +18,49 @@ import { RATE_LIMIT } from '../constants/defaults';
 interface UseMessageSenderOptions {
   config: Required<ChatConfig>;
   messages: Message[];
+  sessionId?: string;          // Persisted session identifier
   onSuccess: (message: Message) => void;
   onError: (message: Message, error: Error) => void;
   updateMessage: (id: string, partial: Partial<Message>) => void;
-  wsSend?: (message: WebSocketMessage) => void; // WebSocket send function
-  connectionStatus?: ConnectionStatus; // For auto-fallback logic
+  wsSend?: (message: WebSocketMessage) => void;
+  connectionStatus?: ConnectionStatus;
+  onWsSend?: () => void;       // Called when a WS message is dispatched (for loading state)
 }
 
 export function useMessageSender({
   config,
   messages,
+  sessionId,
   onSuccess,
   onError,
   updateMessage,
   wsSend,
   connectionStatus,
+  onWsSend,
 }: UseMessageSenderOptions) {
   const [isLoading, setIsLoading] = useState(false);
   const messageTimestamps = useRef<number[]>([]);
   const lastMessageTime = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const stopGenerating = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsLoading(false);
+    }
+  };
 
   // Determine connection mode with AUTO fallback
   const isAutoMode = config.connection?.mode === 'auto';
   const isWebSocketMode = config.connection?.mode === 'websocket';
+
+  const createSystemMessage = (text: string): Message => ({
+    id: crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+    text,
+    sender: 'system',
+    timestamp: new Date().toISOString(),
+  });
 
   // Rate limiting check
   const checkRateLimit = (): boolean => {
@@ -63,7 +84,13 @@ export function useMessageSender({
     return true;
   };
 
-  const sendUserMessage = async (text: string, fileAttachment?: FileAttachment): Promise<void> => {
+  const sendUserMessage = async (text: string, fileAttachment?: FileAttachment, isEdit?: boolean): Promise<void> => {
+    // Drop existing request if a new one is forced OR prevent if loading
+    if (isLoading && !isEdit) return;
+    if (isEdit) {
+      stopGenerating();
+    }
+    
     // Rate limiting
     if (!checkRateLimit()) {
       const errorMessage: Message = {
@@ -76,6 +103,7 @@ export function useMessageSender({
       return;
     }
 
+    abortControllerRef.current = new AbortController();
     setIsLoading(true);
     const now = Date.now();
     messageTimestamps.current.push(now);
@@ -83,6 +111,24 @@ export function useMessageSender({
 
     try {
       let botMessage: Message;
+
+      if (isWebSocketMode && !wsSend) {
+        const connectionError = createSystemMessage(
+          connectionStatus === 'reconnecting' || connectionStatus === 'connecting'
+            ? 'Connection is still being established. Please wait a moment and try again.'
+            : 'Live connection is unavailable right now. Please reconnect and try again.'
+        );
+        onError(connectionError, new Error('WebSocket unavailable'));
+        return;
+      }
+
+      if (isAutoMode && !wsSend && !config.apiUrl) {
+        const fallbackError = createSystemMessage(
+          'Automatic fallback is unavailable because no HTTP apiUrl is configured.'
+        );
+        onError(fallbackError, new Error('Auto mode fallback unavailable'));
+        return;
+      }
 
       // --- MODE 1: MOCK MODE ---
       if (config.mock) {
@@ -145,6 +191,7 @@ export function useMessageSender({
           data: {
             text,
             user: config.user,
+            sessionId,                    // ← inject session ID
             timestamp: new Date().toISOString(),
             ...(fileAttachment
               ? {
@@ -160,16 +207,9 @@ export function useMessageSender({
         };
 
         wsSend(wsMessage);
-
-        // In WebSocket mode, response will come via WebSocket event
-        // So we don't need to wait here, just return
-        setIsLoading(false);
-        
-        // Log auto-fallback info
-        if (isAutoMode && connectionStatus !== 'connected') {
-          console.info('🔄 Auto mode: Using WebSocket (status: ' + connectionStatus + ')');
-        }
-        
+        onWsSend?.();                     // ← signal loading start to caller
+        // In WS mode the response arrives via the onMessage callback,
+        // so we do NOT set isLoading=false here — it's cleared there.
         return;
       }
       // --- MODE 3: HTTP API MODE (or AUTO fallback) ---
@@ -180,7 +220,7 @@ export function useMessageSender({
         
         // Log auto-fallback to HTTP
         if (isAutoMode) {
-          console.info('🔄 Auto mode: Falling back to HTTP (WebSocket unavailable)');
+          console.warn('Auto mode: Falling back to HTTP (WebSocket unavailable)');
         }
 
         // Prepare file data if exists
@@ -212,13 +252,15 @@ export function useMessageSender({
           try {
             const streamResponse = await fetch(config.apiUrl, {
               method: 'POST',
+              signal: abortControllerRef.current?.signal,
               headers: {
                 'Content-Type': 'application/json',
                 ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
               },
               body: JSON.stringify({
                 message: text,
-                stream: true, // Tell backend we want a stream
+                stream: true,
+                sessionId,                 // ← inject session ID
                 user: { ...config.user, hash: config.user?.hash },
                 history: messages.map((m) => ({ text: m.text, sender: m.sender, timestamp: m.timestamp })),
                 ...(fileData ? { file: fileData } : {}),
@@ -256,7 +298,7 @@ export function useMessageSender({
                         // Extract text (support OpenAI standard delta.content or our custom reply)
                         const token = parsed.choices?.[0]?.delta?.content || parsed.reply || parsed.text || '';
                         accumulatedText += token;
-                     } catch(e) { /* ignore parse errors for partial chunks */ }
+                     } catch { /* ignore parse errors for partial chunks */ }
                   } else {
                      // If it's not SSE format, maybe it's just raw text chunks being flushed
                      if ((chunk || '').trim() && !chunk.includes('data:')) {
@@ -293,9 +335,10 @@ export function useMessageSender({
             config.apiUrl,
             {
               message: text,
+              sessionId,                   // ← inject session ID
               user: {
                 ...config.user,
-                hash: config.user?.hash, // Send HMAC hash
+                hash: config.user?.hash,
               },
               history: messages.map((m) => ({
                 text: m.text,
@@ -304,7 +347,8 @@ export function useMessageSender({
               })),
               ...(fileData ? { file: fileData } : {}),
             },
-            config.apiKey
+            config.apiKey,
+            abortControllerRef.current?.signal
           );
 
           botMessage = parseApiResponse(response, config);
@@ -318,10 +362,11 @@ export function useMessageSender({
       console.error('Message send error:', error);
 
       const errorMessage: Message = {
-        id: crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`,
-        text: config.ui?.texts?.errorMessage || 'Connection error. Please try again.',
-        sender: 'system',
-        timestamp: new Date().toISOString(),
+        ...createSystemMessage(
+          connectionStatus === 'reconnecting'
+            ? 'Connection is recovering. Please try again in a moment.'
+            : config.ui?.texts?.errorMessage || 'Connection error. Please try again.'
+        ),
       };
 
       onError(errorMessage, error instanceof Error ? error : new Error('Unknown error'));
@@ -338,6 +383,7 @@ export function useMessageSender({
   return {
     isLoading,
     sendUserMessage,
+    stopGenerating,
   };
 }
 
@@ -393,14 +439,15 @@ function normalizeMockResult(
     };
   }
 
+  const responseLike = result as unknown as Record<string, unknown>;
   const reply =
-    typeof (result as any).reply === 'string'
-      ? (result as any).reply
-      : typeof (result as any).text === 'string'
-        ? (result as any).text
+    typeof responseLike.reply === 'string'
+      ? responseLike.reply
+      : typeof responseLike.text === 'string'
+        ? responseLike.text
         : '';
 
-  return parseApiResponse({ ...(result as any), reply }, config);
+  return parseApiResponse({ ...responseLike, reply } as ApiResponse, config);
 }
 
 function isMessageLike(value: MockHandlerResult): value is Message {

@@ -1,6 +1,7 @@
 // Main Chat Widget Component
 
 import { useEffect, useRef, useState } from 'preact/hooks';
+import type { JSX } from 'preact';
 import type { ChatConfig } from '../types';
 import { ChatWindow } from './ChatWindow';
 import { Launcher } from './Launcher';
@@ -20,12 +21,18 @@ export function ChatWidget({ config }: ChatWidgetProps) {
     fileAttachment,
     connectionStatus, // WebSocket connection status
     unreadCount, // Unread message count
+    reconnectConnection,
     setIsOpen,
     setInputValue,
     setFileAttachment,
     handleSend,
     handleQuickReply,
+    handleCopy,
+    handleEdit,
+    handleFeedback,
+    handleRegenerate,
     handleClearChat,
+    handleStopGenerating,
   } = useChatState(config);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -60,14 +67,17 @@ export function ChatWidget({ config }: ChatWidgetProps) {
     setIsOpen(newState);
 
     // Focus management
-    if (newState) {
-      config.onChatOpened?.();
-      // Focus input after animation
-      setTimeout(() => {
-        const input = chatWindowRef.current?.querySelector('input');
-        input?.focus();
-      }, 300);
-    } else {
+      if (newState) {
+        config.onChatOpened?.();
+        // Focus input after animation
+        setTimeout(() => {
+          const input = chatWindowRef.current?.querySelector('textarea, input') as
+            | HTMLTextAreaElement
+            | HTMLInputElement
+            | null;
+          input?.focus();
+        }, 300);
+      } else {
       config.onChatClosed?.();
     }
   };
@@ -98,6 +108,17 @@ export function ChatWidget({ config }: ChatWidgetProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
+  // Hook for reporting browser tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const cb = config.onVisibilityChange ?? config.events?.onVisibilityChange;
+      cb?.(document.hidden);
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [config.onVisibilityChange, config.events]);
+
   // Click outside to close
   useEffect(() => {
     if (!isOpen || !config.behavior?.closeOnOutsideClick) return;
@@ -127,7 +148,7 @@ export function ChatWidget({ config }: ChatWidgetProps) {
   const texts = config.ui?.texts || config.ui.texts;
   const colors = config.ui?.colors || {};
   
-  const dynamicStyles: any = {
+  const dynamicStyles: JSX.CSSProperties & Record<`--${string}`, string | number> = {
     zIndex: config.ui?.zIndex || 99999,
     ...(config.ui?.position === 'bottom-left'
       ? { left: '20px', right: 'auto', alignItems: 'flex-start' }
@@ -171,10 +192,16 @@ export function ChatWidget({ config }: ChatWidgetProps) {
             onInputChange={setInputValue}
             onSend={handleSend}
             onQuickReplySelect={handleQuickReply}
+            onCopy={handleCopy}
+            onEdit={handleEdit}
+            onFeedback={handleFeedback}
+            onRegenerate={handleRegenerate}
             onFileSelect={setFileAttachment}
             onFileRemove={() => setFileAttachment(undefined)}
             onError={showError}
             onClearChat={handleClearChat}
+            onStopGenerating={handleStopGenerating}
+            onReconnect={reconnectConnection}
           />
         </div>
       )}
@@ -185,6 +212,8 @@ export function ChatWidget({ config }: ChatWidgetProps) {
         ariaLabel={isOpen ? texts?.closeChat : texts?.openChat}
         unreadCount={unreadCount}
         unreadBadgeConfig={config.unreadBadge}
+        title={texts?.title}
+        subtitle={texts?.subtitle}
       />
     </div>
   );

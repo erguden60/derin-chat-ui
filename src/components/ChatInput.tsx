@@ -1,6 +1,7 @@
 // Chat Input Component
 
-import { SendIcon } from '../icons';
+import { useEffect, useRef } from 'preact/hooks';
+import { SendIcon, StopIcon } from '../icons';
 import { FileUpload, type FileAttachment } from './FileUpload';
 import { FilePreview } from './FilePreview';
 import { VoiceInput } from './VoiceInput';
@@ -11,6 +12,7 @@ interface ChatInputProps {
   disabled: boolean;
   onChange: (value: string) => void;
   onSend: () => void;
+  onStopGenerating?: () => void;
   fileAttachment?: FileAttachment;
   onFileSelect?: (file: FileAttachment) => void;
   onFileRemove?: () => void;
@@ -20,6 +22,7 @@ interface ChatInputProps {
   acceptFileTypes?: string;
   enableVoiceInput?: boolean;
   voiceLanguage?: string;
+  onUserTyping?: () => void;
 }
 
 export function ChatInput({
@@ -28,6 +31,7 @@ export function ChatInput({
   disabled,
   onChange,
   onSend,
+  onStopGenerating,
   fileAttachment,
   onFileSelect,
   onFileRemove,
@@ -37,8 +41,20 @@ export function ChatInput({
   acceptFileTypes,
   enableVoiceInput = false,
   voiceLanguage = 'tr-TR',
+  onUserTyping,
 }: ChatInputProps) {
-  const handleKeyPress = (e: KeyboardEvent) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = '22px';
+    const nextHeight = Math.min(textarea.scrollHeight, 72);
+    textarea.style.height = `${nextHeight}px`;
+  }, [value]);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSend();
@@ -88,20 +104,32 @@ export function ChatInput({
         )}
 
         {/* Text Input */}
-        <input
-          type="text"
-          placeholder={placeholder}
-          value={value}
-          onInput={(e) => onChange(e.currentTarget.value)}
-          onKeyPress={handleKeyPress}
-          disabled={disabled}
-          aria-label="Type your message"
-        />
+        <div class="chat-input-field">
+          <textarea
+            ref={textareaRef}
+            placeholder={placeholder}
+            value={value}
+            onInput={(e) => {
+              onChange(e.currentTarget.value);
+              onUserTyping?.();
+            }}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            aria-label="Type your message"
+            rows={1}
+          />
+        </div>
 
-        {/* Send Button */}
-        <button onClick={onSend} disabled={!canSend} aria-label="Send message" class="send-btn">
-          <SendIcon />
-        </button>
+        {/* Send / Stop Button */}
+        {disabled && onStopGenerating ? (
+          <button onClick={onStopGenerating} aria-label="Stop generating" class="send-btn stop-btn" type="button">
+            <StopIcon />
+          </button>
+        ) : (
+          <button onClick={onSend} disabled={!canSend} aria-label="Send message" class="send-btn" type="button">
+            <SendIcon />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -25,16 +25,20 @@ export function useMessages({ initialMessages, maxMessages = 100 }: UseMessagesO
     );
   };
 
-  const removeMessagesAfter = (id: string) => {
+  const removeMessagesAfter = (id: string, inclusive = false) => {
     setMessages((prev) => {
       const idx = prev.findIndex(msg => msg.id === id);
       if (idx === -1) return prev;
-      return prev.slice(0, idx + 1); // Keep up to and including the target message
+      return inclusive ? prev.slice(0, idx) : prev.slice(0, idx + 1);
     });
   };
 
   const clearMessages = (fallback?: Message[]) => {
     setMessages(fallback || initialMessages);
+  };
+
+  const setMessagesList = (newMessages: Message[]) => {
+    setMessages(newMessages);
   };
 
   const createUserMessage = (
@@ -61,6 +65,7 @@ export function useMessages({ initialMessages, maxMessages = 100 }: UseMessagesO
     updateMessage,
     removeMessagesAfter,
     clearMessages,
+    setMessagesList,
     createUserMessage,
     createErrorMessage,
   };

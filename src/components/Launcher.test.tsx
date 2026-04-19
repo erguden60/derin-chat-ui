@@ -8,7 +8,7 @@ describe('Launcher Component', () => {
         render(<Launcher isOpen={false} onClick={() => { }} />);
 
         // Check if button exists
-        const button = screen.getByRole('button');
+        const button = screen.getByLabelText('Open chat');
         expect(button).toBeInTheDocument();
 
         // Check default aria-label (english)
@@ -17,7 +17,7 @@ describe('Launcher Component', () => {
 
     it('shows correct label when open', () => {
         render(<Launcher isOpen={true} onClick={() => { }} />);
-        const button = screen.getByRole('button');
+        const button = screen.getByLabelText('Close chat');
         expect(button).toHaveAttribute('aria-label', 'Close chat');
         expect(button).toHaveClass('is-open'); // Check class toggling
     });
@@ -26,12 +26,12 @@ describe('Launcher Component', () => {
         const handleClick = vi.fn();
         render(<Launcher isOpen={false} onClick={handleClick} />);
 
-        fireEvent.click(screen.getByRole('button'));
+        fireEvent.click(screen.getByLabelText('Open chat'));
         expect(handleClick).toHaveBeenCalledTimes(1);
     });
 
     it('supports custom aria-label', () => {
         render(<Launcher isOpen={false} onClick={() => { }} ariaLabel="Sohbeti Aç" />);
-        expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Sohbeti Aç');
+        expect(screen.getByLabelText('Sohbeti Aç')).toHaveAttribute('aria-label', 'Sohbeti Aç');
     });
 });

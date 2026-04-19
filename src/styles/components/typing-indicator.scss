@@ -4,25 +4,39 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 0;
+  padding: 2px 0;
 
-  span {
-    width: 8px;
-    height: 8px;
+  .typing-indicator-label {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-right: 4px;
+    animation: none;
+    background: transparent;
+    width: auto;
+    height: auto;
+    opacity: 1;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: currentColor;
     opacity: 0.6;
     animation: typing-bounce 1.4s infinite ease-in-out;
 
-    &:nth-child(1) {
+    &:nth-of-type(2) {
       animation-delay: 0s;
     }
 
-    &:nth-child(2) {
+    &:nth-of-type(3) {
       animation-delay: 0.2s;
     }
 
-    &:nth-child(3) {
+    &:nth-of-type(4) {
       animation-delay: 0.4s;
     }
   }

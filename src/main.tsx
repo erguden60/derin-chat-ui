@@ -48,7 +48,7 @@ class DerinChat {
       shadow.appendChild(styleTag);
 
       // Render widget
-      render(<ChatWidget config={fullConfig} />, shadow as any);
+      render(<ChatWidget config={fullConfig} />, shadow as unknown as Element);
     } catch (error) {
       console.error('DerinChat initialization failed:', error);
       throw error;
@@ -66,7 +66,7 @@ class DerinChat {
 
     if (host && host.shadowRoot) {
       // Unmount Preact app
-      render(null, host.shadowRoot as any);
+      render(null, host.shadowRoot as unknown as Element);
 
       // Remove host element
       host.remove();
@@ -76,7 +76,7 @@ class DerinChat {
 
 // Make it globally available
 if (typeof window !== 'undefined') {
-  (window as any).DerinChat = DerinChat;
+  (window as unknown as Window & { DerinChat: typeof DerinChat }).DerinChat = DerinChat;
 }
 
 export default DerinChat;

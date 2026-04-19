@@ -37,13 +37,23 @@ export function parseApiResponse(response: ApiResponse, config: Required<ChatCon
 function getNestedValue(obj: unknown, path: string | undefined): unknown {
   if (!path) return undefined;
 
-  return path.split('.').reduce((current: any, key) => {
-    return current?.[key];
+  return path.split('.').reduce<unknown>((current, key) => {
+    if (typeof current !== 'object' || current === null) return undefined;
+    return (current as Record<string, unknown>)[key];
   }, obj);
 }
 
 // Mock response generator - Generic placeholder for testing
 export function generateMockResponse(userMessage: string): Message {
+  if (userMessage.toLowerCase().includes('payment')) {
+    return {
+      id: generateId(),
+      sender: 'bot',
+      timestamp: new Date().toISOString(),
+      text: `Sure, here is your secure payment link:\n[PAYMENT_LINK]\n\nThank you!`,
+    };
+  }
+
   return {
     id: generateId(),
     sender: 'bot',

@@ -3,6 +3,7 @@
 import type { ApiMessageFormat, ApiResponse } from './api';
 import type { ConnectionConfig, ConnectionStatus } from './connection';
 import type { Message } from './message';
+import type { ComponentChild } from 'preact';
 
 // Unread Badge Configuration
 export interface UnreadBadgeConfig {
@@ -32,6 +33,10 @@ export interface MockHandlerContext {
 }
 
 export interface ChatConfig {
+  // Instance & Mounting
+  instanceId?: string;
+  target?: string | HTMLElement;
+
   // 1. API & MODE
   apiUrl?: string;
   mock?:
@@ -52,6 +57,7 @@ export interface ChatConfig {
 
   // 2. FEATURE TOGGLES
   features?: {
+    history?: boolean; // Persist session history
     images?: boolean; // Image display
     quickReplies?: boolean; // Quick reply buttons
     agentMode?: boolean; // Live agent mode
@@ -86,6 +92,7 @@ export interface ChatConfig {
     logo?: string;
     theme?: 'light' | 'dark' | 'auto';
     layout?: 'normal' | 'compact' | 'full-screen';
+    showWelcomeScreen?: boolean; // Enable/disable the empty state welcome screen (default: true)
 
     // Color Palette (Complete control)
     colors?: {
@@ -113,6 +120,29 @@ export interface ChatConfig {
       mockModeInfo?: string;
       openChat?: string;
       closeChat?: string;
+
+      // Welcome Screen
+      welcomeBadge?: string;    // e.g. "AI assistant"
+      welcomeMessage?: string;  // e.g. "Hello! How can I help you?"
+      welcomeHints?: string[];  // e.g. ["Ask a question", "Get instant answers"]
+
+      // Message edit actions
+      cancel?: string;          // default: 'Cancel'
+      save?: string;            // default: 'Save'
+
+      // File / Drag-drop
+      dropFile?: string;        // default: 'Drop file here'
+      fileSizeError?: string;   // default: 'File must be smaller than {maxSize}MB'
+      imageLoadError?: string;  // default: 'Failed to load image'
+
+      // Tooltips
+      copy?: string;
+      copied?: string;
+      regenerate?: string;
+      readAloud?: string;
+      stopSpeaking?: string;
+      helpful?: string;
+      notHelpful?: string;
     };
 
     // File Upload Config
@@ -130,7 +160,22 @@ export interface ChatConfig {
     maxMessages?: number; // Maximum message count
   };
 
-  // 6. EVENT HOOKS
+  // 6. EVENT HOOKS (all callbacks live at the top level for a flat, consistent API)
+  /** @deprecated Use onUserTyping directly instead */
+  events?: {
+    onUserTyping?: () => void;
+    onVisibilityChange?: (isHidden: boolean) => void;
+    onVoiceStart?: () => void;
+    onVoiceEnd?: () => void;
+  };
+
+  // Lifecycle events
+  onUserTyping?: () => void;
+  onVisibilityChange?: (isHidden: boolean) => void;
+  onVoiceStart?: () => void;
+  onVoiceEnd?: () => void;
+  
+  onBeforeMessageSend?: (message: string) => string | Promise<string>;
   onMessageSent?: (message: string) => void;
   onMessageReceived?: (message: unknown) => void;
   onChatOpened?: () => void;
@@ -148,9 +193,15 @@ export interface ChatConfig {
 
   // Advanced Message Tools callbacks
   onMessageCopy?: (messageId: string, text: string) => void;
+  onMessageEdit?: (messageId: string, newContent: string) => void;
+  onRegenerate?: (messageId: string) => void;
   onFeedback?: (messageId: string, type: 'positive' | 'negative') => void;
   onChatClear?: () => void; // Triggered when user clicks clear chat
   
   // Voice Events
   onVoiceError?: (error: string) => void;
+
+  // Custom Renderers
+  // Can return a Virtual DOM node (Preact/React) or an object { html: '...' } for vanilla JS environments
+  renderCustomMessage?: (message: Message) => ComponentChild | { html: string };
 }

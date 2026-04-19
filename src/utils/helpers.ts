@@ -3,9 +3,21 @@
 import type { ChatConfig } from '../types';
 import { DEFAULT_CONFIG } from '../constants/defaults';
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  if (typeof Element !== 'undefined' && value instanceof Element) {
+    return false;
+  }
+
+  return true;
+}
+
 // Deep merge helper
-function deepMerge<T>(target: T, source: Partial<T>): T {
-  const result = { ...target };
+function deepMerge<T extends Record<string, unknown>>(target: T, source: Record<string, unknown>): T {
+  const result: Record<string, unknown> = { ...target };
 
   for (const key in source) {
     // Prototype pollution protection
@@ -16,19 +28,22 @@ function deepMerge<T>(target: T, source: Partial<T>): T {
     const sourceValue = source[key];
     const targetValue = result[key];
 
-    if (sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue)) {
-      result[key] = deepMerge(targetValue || ({} as any), sourceValue);
+    if (isPlainObject(sourceValue)) {
+      result[key] = deepMerge(isPlainObject(targetValue) ? targetValue : {}, sourceValue);
     } else if (sourceValue !== undefined) {
-      result[key] = sourceValue as any;
+      result[key] = sourceValue;
     }
   }
 
-  return result;
+  return result as T;
 }
 
 // Config merge with defaults
 export function mergeConfig(userConfig: ChatConfig): Required<ChatConfig> {
-  const merged = deepMerge(DEFAULT_CONFIG as any, userConfig) as Required<ChatConfig>;
+  const merged = deepMerge(
+    DEFAULT_CONFIG as unknown as Record<string, unknown>,
+    userConfig as unknown as Record<string, unknown>
+  ) as Required<ChatConfig>;
   
   // Set default voice language dynamically if voice features are enabled
   if (merged.features?.voice) {

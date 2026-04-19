@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'preact/hooks';
+import type { JSX } from 'preact';
 import type { ChatConfig } from './main';
 import { ChatIcon, CloseIcon, SendIcon } from './icons';
 
@@ -133,7 +134,7 @@ export function App({ config }: AppProps) {
           timestamp: new Date(),
         },
       ]);
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -166,7 +167,7 @@ export function App({ config }: AppProps) {
     ...(position === 'bottom-left'
       ? { left: '20px', right: 'auto', alignItems: 'flex-start' }
       : { right: '20px', left: 'auto', alignItems: 'flex-end' }),
-  } as any;
+  } as JSX.CSSProperties;
 
   return (
     <div class="derin-widget-container" style={dynamicStyles}>

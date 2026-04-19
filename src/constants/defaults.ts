@@ -14,6 +14,13 @@ export const DEFAULT_TEXTS = {
   errorMessage: 'Connection error. Please try again.',
   rateLimitError: 'You are sending messages too fast. Please wait.',
   mockModeInfo: 'You are in mock mode. No backend connection.',
+  // Edit actions
+  cancel: 'Cancel',
+  save: 'Save',
+  // File / Drag-drop
+  dropFile: 'Drop file here',
+  fileSizeError: 'File must be smaller than {maxSize}MB.',
+  imageLoadError: 'Failed to load image.',
 };
 
 export const DEFAULT_FEATURES = {
@@ -43,6 +50,8 @@ export const DEFAULT_MESSAGE_FORMAT = {
 };
 
 export const DEFAULT_CONFIG = {
+  instanceId: 'default',
+  target: 'body',
   ui: {
     position: 'bottom-right' as const,
     zIndex: 99999,

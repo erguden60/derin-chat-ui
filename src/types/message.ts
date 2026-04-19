@@ -50,6 +50,9 @@ export interface Message {
   /** Indicates if the message is currently being streamed (chunk-by-chunk) */
   isStreaming?: boolean;
   
+  /** Indicates if the user edited this message */
+  isEdited?: boolean;
+  
   /** Feedback given by the user ('positive' or 'negative') for advanced tools */
   feedback?: 'positive' | 'negative';
 }

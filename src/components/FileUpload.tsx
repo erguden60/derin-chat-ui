@@ -93,7 +93,7 @@ export function FileUpload({ onFileSelect, onError, maxSize = 10 }: FileUploadPr
     if (type === 'image') {
       try {
         preview = await readFileAsDataURL(file);
-      } catch (error) {
+      } catch {
         onError?.('Error loading image.');
         return;
       }

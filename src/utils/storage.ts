@@ -20,30 +20,41 @@ const LEGACY_KEYS = {
   UNREAD_COUNT: 'derin-chat-unread-count',
 } as const;
 
-export function saveMessages(messages: Message[]): void {
+function getStorageKeys(instanceId = 'default') {
+  const suffix = instanceId === 'default' ? '' : `-${instanceId}`;
+
+  return {
+    MESSAGES: `${STORAGE_KEYS.MESSAGES}${suffix}`,
+    SESSION_ID: `${STORAGE_KEYS.SESSION_ID}${suffix}`,
+    IS_OPEN: `${STORAGE_KEYS.IS_OPEN}${suffix}`,
+    UNREAD_COUNT: `${STORAGE_KEYS.UNREAD_COUNT}${suffix}`,
+  } as const;
+}
+
+export function saveMessages(messages: Message[], instanceId = 'default'): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
 
   try {
-    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
+    localStorage.setItem(getStorageKeys(instanceId).MESSAGES, JSON.stringify(messages));
   } catch (error) {
     console.warn('Failed to save messages to localStorage:', error);
   }
 }
 
-export function loadMessages(): Message[] | null {
+export function loadMessages(instanceId = 'default'): Message[] | null {
   if (typeof window === 'undefined' || !window.localStorage) return null;
 
   try {
+    const keys = getStorageKeys(instanceId);
     // Try loading from versioned key
-    let data = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+    let data = localStorage.getItem(keys.MESSAGES);
     
     // Migration: Try legacy key if versioned key doesn't exist
-    if (!data) {
+    if (!data && instanceId === 'default') {
       data = localStorage.getItem(LEGACY_KEYS.MESSAGES);
       if (data) {
-        console.info('📦 Migrating messages from legacy storage to v1');
         // Migrate to new key
-        localStorage.setItem(STORAGE_KEYS.MESSAGES, data);
+        localStorage.setItem(keys.MESSAGES, data);
         localStorage.removeItem(LEGACY_KEYS.MESSAGES);
       }
     }
@@ -72,37 +83,38 @@ export function loadMessages(): Message[] | null {
   }
 }
 
-export function clearMessages(): void {
+export function clearMessages(instanceId = 'default'): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
 
   try {
-    localStorage.removeItem(STORAGE_KEYS.MESSAGES);
+    localStorage.removeItem(getStorageKeys(instanceId).MESSAGES);
   } catch (error) {
     console.warn('Failed to clear messages from localStorage:', error);
   }
 }
 
-export function saveSessionId(sessionId: string): void {
+export function saveSessionId(sessionId: string, instanceId = 'default'): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
 
   try {
-    localStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+    localStorage.setItem(getStorageKeys(instanceId).SESSION_ID, sessionId);
   } catch (error) {
     console.warn('Failed to save session ID:', error);
   }
 }
 
-export function loadSessionId(): string | null {
+export function loadSessionId(instanceId = 'default'): string | null {
   if (typeof window === 'undefined' || !window.localStorage) return null;
 
   try {
-    let sessionId = localStorage.getItem(STORAGE_KEYS.SESSION_ID);
+    const keys = getStorageKeys(instanceId);
+    let sessionId = localStorage.getItem(keys.SESSION_ID);
     
     // Migration from legacy key
-    if (!sessionId) {
+    if (!sessionId && instanceId === 'default') {
       sessionId = localStorage.getItem(LEGACY_KEYS.SESSION_ID);
       if (sessionId) {
-        localStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+        localStorage.setItem(keys.SESSION_ID, sessionId);
         localStorage.removeItem(LEGACY_KEYS.SESSION_ID);
       }
     }
@@ -114,65 +126,67 @@ export function loadSessionId(): string | null {
   }
 }
 
-export function saveIsOpen(isOpen: boolean): void {
+export function saveIsOpen(isOpen: boolean, instanceId = 'default'): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
 
   try {
-    localStorage.setItem(STORAGE_KEYS.IS_OPEN, String(isOpen));
+    localStorage.setItem(getStorageKeys(instanceId).IS_OPEN, String(isOpen));
   } catch (error) {
     console.warn('Failed to save chat state:', error);
   }
 }
 
-export function loadIsOpen(): boolean {
+export function loadIsOpen(instanceId = 'default'): boolean {
   if (typeof window === 'undefined' || !window.localStorage) return false;
 
   try {
-    let isOpen = localStorage.getItem(STORAGE_KEYS.IS_OPEN);
+    const keys = getStorageKeys(instanceId);
+    let isOpen = localStorage.getItem(keys.IS_OPEN);
     
     // Migration from legacy key
-    if (!isOpen) {
+    if (!isOpen && instanceId === 'default') {
       isOpen = localStorage.getItem(LEGACY_KEYS.IS_OPEN);
       if (isOpen) {
-        localStorage.setItem(STORAGE_KEYS.IS_OPEN, isOpen);
+        localStorage.setItem(keys.IS_OPEN, isOpen);
         localStorage.removeItem(LEGACY_KEYS.IS_OPEN);
       }
     }
     
     return isOpen === 'true';
-  } catch (error) {
+  } catch {
     return false;
   }
 }
 
 // Unread Count Storage
-export function saveUnreadCount(count: number): void {
+export function saveUnreadCount(count: number, instanceId = 'default'): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
 
   try {
-    localStorage.setItem(STORAGE_KEYS.UNREAD_COUNT, String(count));
+    localStorage.setItem(getStorageKeys(instanceId).UNREAD_COUNT, String(count));
   } catch (error) {
     console.warn('Failed to save unread count:', error);
   }
 }
 
-export function loadUnreadCount(): number {
+export function loadUnreadCount(instanceId = 'default'): number {
   if (typeof window === 'undefined' || !window.localStorage) return 0;
 
   try {
-    let count = localStorage.getItem(STORAGE_KEYS.UNREAD_COUNT);
+    const keys = getStorageKeys(instanceId);
+    let count = localStorage.getItem(keys.UNREAD_COUNT);
     
     // Migration from legacy key
-    if (!count) {
+    if (!count && instanceId === 'default') {
       count = localStorage.getItem(LEGACY_KEYS.UNREAD_COUNT);
       if (count) {
-        localStorage.setItem(STORAGE_KEYS.UNREAD_COUNT, count);
+        localStorage.setItem(keys.UNREAD_COUNT, count);
         localStorage.removeItem(LEGACY_KEYS.UNREAD_COUNT);
       }
     }
     
     return count ? parseInt(count, 10) : 0;
-  } catch (error) {
+  } catch {
     return 0;
   }
 }

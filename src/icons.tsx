@@ -29,6 +29,21 @@ export const CloseIcon = () => (
   </svg>
 );
 
+export const StopIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    stroke="currentColor"
+    stroke-width="2"
+    fill="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <rect x="6" y="6" width="12" height="12"></rect>
+  </svg>
+);
+
 export const SendIcon = () => (
   <svg
     viewBox="0 0 24 24"

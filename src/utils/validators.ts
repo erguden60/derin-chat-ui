@@ -10,6 +10,24 @@ export class ConfigError extends Error {
 }
 
 export function validateConfig(config: ChatConfig): void {
+  if (config.instanceId !== undefined) {
+    if (typeof config.instanceId !== 'string' || !config.instanceId.trim()) {
+      throw new ConfigError('Invalid configuration: instanceId must be a non-empty string');
+    }
+  }
+
+  if (config.target !== undefined) {
+    const isStringTarget = typeof config.target === 'string' && config.target.trim().length > 0;
+    const isElementTarget =
+      typeof Element !== 'undefined' && config.target instanceof Element;
+
+    if (!isStringTarget && !isElementTarget) {
+      throw new ConfigError(
+        'Invalid configuration: target must be a CSS selector string or an HTMLElement'
+      );
+    }
+  }
+
   // Check if apiUrl is explicitly provided but empty
   if (config.apiUrl !== undefined && config.apiUrl !== null && typeof config.apiUrl === 'string') {
     const trimmedUrl = config.apiUrl.trim();

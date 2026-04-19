@@ -9,27 +9,34 @@ interface UsePersistenceOptions {
   messages: Message[];
   isOpen: boolean;
   unreadCount?: number;
+  instanceId?: string;
 }
 
-export function usePersistence({ enabled, messages, isOpen, unreadCount }: UsePersistenceOptions) {
+export function usePersistence({
+  enabled,
+  messages,
+  isOpen,
+  unreadCount,
+  instanceId = 'default',
+}: UsePersistenceOptions) {
   // Persist messages
   useEffect(() => {
     if (enabled && messages.length > 1) {
-      saveMessages(messages);
+      saveMessages(messages, instanceId);
     }
-  }, [messages, enabled]);
+  }, [messages, enabled, instanceId]);
 
   // Persist isOpen state
   useEffect(() => {
     if (enabled) {
-      saveIsOpen(Boolean(isOpen));
+      saveIsOpen(Boolean(isOpen), instanceId);
     }
-  }, [isOpen, enabled]);
+  }, [isOpen, enabled, instanceId]);
 
   // Persist unread count
   useEffect(() => {
     if (enabled && unreadCount !== undefined) {
-      saveUnreadCount(unreadCount);
+      saveUnreadCount(unreadCount, instanceId);
     }
-  }, [unreadCount, enabled]);
+  }, [unreadCount, enabled, instanceId]);
 }

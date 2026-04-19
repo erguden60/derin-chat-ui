@@ -2,12 +2,11 @@ import { render, screen, fireEvent } from '@testing-library/preact';
 import { describe, it, expect, vi } from 'vitest';
 import { ChatHeader } from './ChatHeader';
 import type { ChatConfig } from '../types';
+import { mergeConfig } from '../utils/helpers';
 
 describe('ChatHeader Component', () => {
-    const mockConfig: Required<ChatConfig> = {
-        apiUrl: '',
+    const mockConfig = mergeConfig({
         mock: false,
-        apiKey: '',
         ui: {
             texts: {
                 title: 'Test Title',
@@ -20,12 +19,8 @@ describe('ChatHeader Component', () => {
             fontFamily: '',
             logo: '',
             fileUpload: {}
-        },
-        features: {},
-        behavior: {},
-        user: {},
-        messageFormat: {}
-    } as any; // Partial mock
+        }
+    });
 
     it('renders title and subtitle correctly', () => {
         render(
@@ -41,12 +36,13 @@ describe('ChatHeader Component', () => {
     });
 
     it('shows loading state text', () => {
-        const loadingConfig = {
+        const loadingConfig: Required<ChatConfig> = {
             ...mockConfig,
             ui: {
+                ...mockConfig.ui,
                 texts: { ...mockConfig.ui.texts, loading: 'Loading...' }
             }
-        } as any;
+        };
 
         render(
             <ChatHeader
@@ -57,6 +53,19 @@ describe('ChatHeader Component', () => {
         );
 
         expect(screen.getByText('Loading...')).toBeInTheDocument();
+    });
+
+    it('shows connection-aware subtitle when reconnecting', () => {
+        render(
+            <ChatHeader
+                config={mockConfig}
+                isLoading={false}
+                onClose={() => { }}
+                connectionStatus="reconnecting"
+            />
+        );
+
+        expect(screen.getByText('Reconnecting...')).toBeInTheDocument();
     });
 
     it('uses configured close label', () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import DerinChat from '../index';
+import type { ChatConfig } from '../types';
 
 function ColorPickerRow({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) {
     return (
@@ -63,15 +64,28 @@ export function DemoControls() {
                 }
             },
             ui: {
-                position: config.position as any,
-                theme: config.theme as any,
-                layout: config.layout as any,
+                position: config.position as NonNullable<ChatConfig['ui']>['position'],
+                theme: config.theme as NonNullable<ChatConfig['ui']>['theme'],
+                layout: config.layout as NonNullable<ChatConfig['ui']>['layout'],
+                showWelcomeScreen: true,
                 texts: {
                     title: config.title,
                     subtitle: config.subtitle,
                     placeholder: config.language === 'tr' ? 'Mesaj yazın...' : 'Type your message...',
                     openChat: config.language === 'tr' ? 'Sohbeti aç' : 'Open chat',
-                    closeChat: config.language === 'tr' ? 'Sohbeti kapat' : 'Close chat'
+                    closeChat: config.language === 'tr' ? 'Sohbeti kapat' : 'Close chat',
+                    welcomeBadge: config.language === 'tr' ? 'Sanal Asistan' : 'AI Assistant',
+                    welcomeMessage: config.language === 'tr' ? 'Size nasıl yardımcı olabilirim?' : 'How can I help you?',
+                    welcomeHints: config.language === 'tr' 
+                      ? ['Sipariş Durumu', 'Kargo Takibi', 'İade Koşulları']
+                      : ['Order Status', 'Track Package', 'Return Policy'],
+                    copy: config.language === 'tr' ? 'Kopyala' : 'Copy',
+                    copied: config.language === 'tr' ? 'Kopyalandı' : 'Copied!',
+                    regenerate: config.language === 'tr' ? 'Yeniden Oluştur' : 'Regenerate',
+                    readAloud: config.language === 'tr' ? 'Sesli Oku' : 'Read aloud',
+                    stopSpeaking: config.language === 'tr' ? 'Durdur' : 'Stop',
+                    helpful: config.language === 'tr' ? 'Yararlı' : 'Helpful',
+                    notHelpful: config.language === 'tr' ? 'Yararlı değil' : 'Not helpful'
                 },
                 colors: {
                     primary: config.primaryColor || undefined,
@@ -91,13 +105,26 @@ export function DemoControls() {
                 closeOnOutsideClick: false // Prevent closing when interacting with controls
             },
             onMessageCopy: (id, text) => {
-                console.log('📝 Copied message:', id, text.substring(0, 30) + '...');
+                console.warn('Copied message:', id, text.substring(0, 30) + '...');
             },
             onChatClear: () => {
-                console.log('🧹 Chat history cleared');
+                console.warn('Chat history cleared');
             },
             onFeedback: (id, type) => {
-                console.log(`👍 Feedback given [${type}] for:`, id);
+                console.warn(`Feedback given [${type}] for:`, id);
+            },
+            renderCustomMessage: (message) => {
+                // If the message contains a specific trigger text, render a custom widget!
+                if (message.text && message.text.includes('[PAYMENT_LINK]')) {
+                    return (
+                        <div style={{ padding: '12px', background: '#f5f5f5', borderRadius: '8px', border: '1px solid #ddd', marginTop: '8px' }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>Secure Payment Request</div>
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>Please complete your payment of $49.99 to proceed.</div>
+                            <button style={{ background: '#000', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', width: '100%' }}>Pay Now</button>
+                        </div>
+                    );
+                }
+                return undefined; // fallback to default text rendering
             }
         });
     }, [config]);

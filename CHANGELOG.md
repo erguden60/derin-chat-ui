@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🚧 v1.1.0 In Progress
+
+#### Added
+- **Multi-Instance Support** - `instanceId` and `target` let multiple widgets mount on the same page without colliding
+- **Instance-Scoped Persistence** - localStorage keys are now namespaced per widget instance
+- **Mount Target Support** - Widgets can mount into `document.body`, a selector, or an `HTMLElement`
+- **Connection Recovery UX** - reconnecting, connecting, offline, and failed states now surface directly in the UI
+
+#### Improved
+- **Config Validation** - `instanceId` and `target` now receive explicit validation errors
+- **Connection Messaging** - WebSocket-only and auto-fallback edge cases now produce clearer system messages
+- **Header Status UX** - Loading and connection states are reflected more accurately in the header
+- **Docs Alignment** - README and developer docs updated to describe modern SDK capabilities
+
+#### Testing
+- Added multi-instance initialization/destroy tests
+- Added validation coverage for `instanceId` and `target`
+- Added connection-aware header state test
+
+---
+
 ## [1.0.8] - 2025-03-10
 
 ### 🎯 Latest Stable Release
@@ -255,9 +278,6 @@ First stable release of Derin Chat Widget - a modern, lightweight, and fully cus
 - **SCSS** - Modern styling with component isolation
 - **Vitest** - Fast unit testing
 
----
-
-## [Unreleased]
 
 ### Planned Features (v2.0)
 

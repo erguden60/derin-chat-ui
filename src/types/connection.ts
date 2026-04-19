@@ -56,7 +56,7 @@ export type WebSocketMessageType =
 
 export interface WebSocketMessage {
     type: WebSocketMessageType;
-    data?: any;
+    data?: unknown;
     timestamp?: string;
 }
 
@@ -64,7 +64,7 @@ export interface WebSocketMessage {
 
 export interface ConnectionEventMap {
     statusChange: ConnectionStatus;
-    message: any;
+    message: unknown;
     error: Error;
     reconnecting: number; // attempt number
     reconnected: void;

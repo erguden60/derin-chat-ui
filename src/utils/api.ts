@@ -24,6 +24,10 @@ async function fetchWithTimeout(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+  if (options.signal) {
+    options.signal.addEventListener('abort', () => controller.abort());
+  }
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -65,7 +69,8 @@ async function retryFetch(
 export async function sendMessage(
   url: string,
   request: ApiRequest,
-  apiKey?: string
+  apiKey?: string,
+  signal?: AbortSignal
 ): Promise<ApiResponse> {
   try {
     const response = await retryFetch(url, {
@@ -75,6 +80,7 @@ export async function sendMessage(
         ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
       },
       body: JSON.stringify(request),
+      signal, // Pass the abort signal
     });
 
     if (!response.ok) {

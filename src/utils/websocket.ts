@@ -7,7 +7,7 @@ import type {
     ConnectionEventMap,
 } from '../types/connection';
 
-type EventCallback<T = any> = (data: T) => void;
+type EventCallback<T = unknown> = (data: T) => void;
 
 export class WebSocketManager {
     private ws: WebSocket | null = null;
@@ -106,14 +106,14 @@ export class WebSocketManager {
         if (!this.eventListeners.has(event)) {
             this.eventListeners.set(event, new Set());
         }
-        this.eventListeners.get(event)!.add(callback);
+        this.eventListeners.get(event)!.add(callback as EventCallback);
     }
 
     public off<K extends keyof ConnectionEventMap>(
         event: K,
         callback: EventCallback<ConnectionEventMap[K]>
     ): void {
-        this.eventListeners.get(event)?.delete(callback);
+        this.eventListeners.get(event)?.delete(callback as EventCallback);
     }
 
     private emit<K extends keyof ConnectionEventMap>(event: K, data: ConnectionEventMap[K]): void {
@@ -123,7 +123,8 @@ export class WebSocketManager {
     // --- PRIVATE HANDLERS ---
 
     private handleOpen(): void {
-        console.log('✅ WebSocket connected');
+        const wasReconnecting = this.reconnectAttempts > 0;
+
         this.setStatus('connected');
         this.reconnectAttempts = 0;
 
@@ -134,7 +135,7 @@ export class WebSocketManager {
         this.flushMessageQueue();
 
         // Emit reconnected event if this was a reconnection
-        if (this.reconnectAttempts > 0) {
+        if (wasReconnecting) {
             this.emit('reconnected', undefined);
         }
     }
@@ -155,13 +156,12 @@ export class WebSocketManager {
         }
     }
 
-    private handleError(error: any): void {
+    private handleError(error: unknown): void {
         console.error('WebSocket error:', error);
         this.emit('error', error instanceof Error ? error : new Error('WebSocket error'));
     }
 
-    private handleClose(event: CloseEvent): void {
-        console.log('WebSocket closed:', event.code, event.reason);
+    private handleClose(_event: CloseEvent): void {
         this.clearTimers();
 
         // Don't reconnect if intentionally closed
@@ -193,8 +193,6 @@ export class WebSocketManager {
         this.reconnectAttempts++;
         this.setStatus('reconnecting');
         this.emit('reconnecting', this.reconnectAttempts);
-
-        console.log(`Reconnecting... (attempt ${this.reconnectAttempts})`);
 
         // Exponential backoff
         const delay = Math.min(
@@ -233,7 +231,6 @@ export class WebSocketManager {
     private flushMessageQueue(): void {
         if (this.messageQueue.length === 0) return;
 
-        console.log(`Sending ${this.messageQueue.length} queued messages`);
         this.messageQueue.forEach((msg) => this.send(msg));
         this.messageQueue = [];
     }

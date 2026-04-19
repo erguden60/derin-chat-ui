@@ -2,6 +2,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { validateConfig, ConfigError } from './validators.js';
+import type { ChatConfig } from '../types';
 
 describe('validateConfig - API URL Validation', () => {
   it('should warn if no apiUrl and not mock mode', () => {
@@ -84,7 +85,7 @@ describe('validateConfig - UI Validation', () => {
 
     validateConfig({
       mock: true,
-      ui: { position: 'top-left' as any },
+      ui: { position: 'top-left' as NonNullable<ChatConfig['ui']>['position'] },
     });
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid position value'));
@@ -106,6 +107,42 @@ describe('validateConfig - UI Validation', () => {
         ui: { position: 'bottom-left' },
       });
     }).not.toThrow();
+  });
+
+  it('should reject empty instanceId', () => {
+    expect(() => {
+      validateConfig({
+        mock: true,
+        instanceId: '   ',
+      });
+    }).toThrow('Invalid configuration: instanceId must be a non-empty string');
+  });
+
+  it('should accept valid target selector and element target', () => {
+    const target = document.createElement('div');
+
+    expect(() => {
+      validateConfig({
+        mock: true,
+        target: '#chat-root',
+      });
+    }).not.toThrow();
+
+    expect(() => {
+      validateConfig({
+        mock: true,
+        target,
+      });
+    }).not.toThrow();
+  });
+
+  it('should reject invalid target values', () => {
+    expect(() => {
+      validateConfig({
+        mock: true,
+        target: '' as unknown as HTMLElement,
+      });
+    }).toThrow('Invalid configuration: target must be a CSS selector string or an HTMLElement');
   });
 });
 

@@ -89,8 +89,8 @@ describe('parseMarkdown - Edge Cases', () => {
   });
 
   it('should handle null/undefined safely', () => {
-    expect(parseMarkdown(null as any)).toBe('');
-    expect(parseMarkdown(undefined as any)).toBe('');
+    expect(parseMarkdown(null as unknown as string)).toBe('');
+    expect(parseMarkdown(undefined as unknown as string)).toBe('');
   });
 
   it('should handle multiple protocols in text', () => {
