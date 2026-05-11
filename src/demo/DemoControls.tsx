@@ -1,6 +1,63 @@
 import { useState, useEffect } from 'preact/hooks';
 import DerinChat from '../index';
 import type { ChatConfig } from '../types';
+import type { ComponentChildren } from 'preact';
+
+type DemoPanel = 'config' | 'quickstart' | 'backend' | 'deploy';
+
+const tabButtonBase = {
+    flex: 1,
+    border: '1px solid #d7ddec',
+    borderRadius: '6px',
+    padding: '8px 10px',
+    fontFamily: 'inherit',
+    fontSize: '11px',
+    fontWeight: 700,
+    cursor: 'pointer',
+} as const;
+
+function SectionTitle({ eyebrow, title, description }: { eyebrow: string, title: string, description: string }) {
+    return (
+        <div style={{ marginBottom: '16px' }}>
+            <div style={{ color: '#000080', fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                {eyebrow}
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: '24px', lineHeight: 1.1, letterSpacing: 0, margin: '0 0 8px', color: '#111' }}>
+                {title}
+            </h2>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', lineHeight: 1.55, color: '#4d5568', margin: 0 }}>
+                {description}
+            </p>
+        </div>
+    );
+}
+
+function CodeBlock({ title, children }: { title: string, children: string }) {
+    return (
+        <div style={{ border: '1px solid #cfd6ec', borderRadius: '8px', overflow: 'hidden', background: '#101426', marginTop: '12px' }}>
+            <div style={{ height: '34px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 12px', background: '#eef1f8', borderBottom: '1px solid #cfd6ec' }}>
+                <div className="window-dots">
+                    <div className="dot dot-red"></div>
+                    <div className="dot dot-yellow"></div>
+                    <div className="dot dot-green"></div>
+                </div>
+                <span style={{ color: '#56607a', fontSize: '11px', fontWeight: 700 }}>{title}</span>
+            </div>
+            <pre style={{ margin: 0, padding: '14px', overflowX: 'auto', color: '#e8ecff', fontSize: '11px', lineHeight: 1.65, whiteSpace: 'pre' }}>
+                <code>{children}</code>
+            </pre>
+        </div>
+    );
+}
+
+function DocCard({ title, children }: { title: string, children: ComponentChildren }) {
+    return (
+        <div style={{ border: '1px solid #e0e5f4', borderRadius: '8px', background: '#fff', padding: '14px', marginTop: '10px' }}>
+            <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '15px', lineHeight: 1.25, margin: '0 0 6px', color: '#111' }}>{title}</h3>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: '#4d5568', lineHeight: 1.55 }}>{children}</div>
+        </div>
+    );
+}
 
 function ColorPickerRow({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) {
     return (
@@ -31,6 +88,7 @@ function ColorPickerRow({ label, value, onChange }: { label: string, value: stri
 }
 
 export function DemoControls() {
+    const [activePanel, setActivePanel] = useState<DemoPanel>('config');
     const [config, setConfig] = useState({
         title: 'Derin Chat',
         subtitle: 'Online Support',
@@ -129,6 +187,21 @@ export function DemoControls() {
         });
     }, [config]);
 
+    const renderTab = (id: DemoPanel, label: string) => (
+        <button
+            type="button"
+            onClick={() => setActivePanel(id)}
+            style={{
+                ...tabButtonBase,
+                background: activePanel === id ? '#000080' : '#fff',
+                color: activePanel === id ? '#fff' : '#333',
+                borderColor: activePanel === id ? '#000080' : '#d7ddec',
+            }}
+        >
+            {label}
+        </button>
+    );
+
     return (
         <div style={{ padding: '24px', fontFamily: 'var(--font-mono)', color: '#333' }}>
             <div className="window-header" style={{ marginBottom: '20px', background: 'transparent', padding: 0, border: 'none' }}>
@@ -137,10 +210,17 @@ export function DemoControls() {
                     <div className="dot dot-yellow"></div>
                     <div className="dot dot-green"></div>
                 </div>
-                <span className="window-title" style={{ marginLeft: '12px', fontWeight: 600 }}>Widget Configurator</span>
+                <span className="window-title" style={{ marginLeft: '12px', fontWeight: 600 }}>Derin Chat Local Docs</span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px', marginBottom: '18px' }}>
+                {renderTab('config', 'Configure')}
+                {renderTab('quickstart', 'Quick Start')}
+                {renderTab('backend', 'Backend')}
+                {renderTab('deploy', 'Vercel')}
+            </div>
+
+            {activePanel === 'config' && <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {/* Title Input */}
                 <div>
                     <label style={{ display: 'block', fontSize: '12px', marginBottom: '6px', fontWeight: 500, color: '#666' }}>
@@ -261,9 +341,105 @@ export function DemoControls() {
                 </div>
 
                 <div style={{ marginTop: '10px', padding: '12px', background: '#f5f5f5', borderRadius: '6px', fontSize: '11px', color: '#666' }}>
-                    💡 Changes apply instantly. Click the widget button to see updates.
+                    Changes apply instantly. Click the widget button to see updates.
                 </div>
-            </div>
+            </div>}
+
+            {activePanel === 'quickstart' && (
+                <div>
+                    <SectionTitle
+                        eyebrow="Next.js / React"
+                        title="Install, mount, destroy."
+                        description="Use a client component for App Router. The widget injects its own Shadow DOM styles, so no separate CSS import is needed."
+                    />
+                    <DocCard title="Install">
+                        <code>npm install derin-chat-ui preact</code>
+                    </DocCard>
+                    <CodeBlock title="app/components/ChatWidget.tsx">{`'use client';
+
+import { useEffect } from 'react';
+import DerinChat from 'derin-chat-ui';
+
+export default function ChatWidget() {
+  useEffect(() => {
+    DerinChat.init({
+      instanceId: 'support-widget',
+      apiUrl: '/api/chat',
+      connection: { stream: true },
+      ui: {
+        theme: 'auto',
+        colors: { primary: '#000080' },
+        texts: {
+          title: 'Derin Support',
+          subtitle: 'Online'
+        }
+      }
+    });
+
+    return () => DerinChat.destroy('support-widget');
+  }, []);
+
+  return null;
+}`}</CodeBlock>
+                    <DocCard title="CDN fallback">
+                        For plain HTML pages, load <code>https://unpkg.com/derin-chat-ui@1.0.11/dist/index.umd.js</code> and call <code>window.DerinChat.init(...)</code>.
+                    </DocCard>
+                </div>
+            )}
+
+            {activePanel === 'backend' && (
+                <div>
+                    <SectionTitle
+                        eyebrow="Backend contract"
+                        title="Your API only has to return reply."
+                        description="HTTP mode sends a JSON POST. You can start with the minimal response and add quick replies, images, actions, or agent metadata later."
+                    />
+                    <CodeBlock title="app/api/chat/route.ts">{`import { NextResponse } from 'next/server';
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  return NextResponse.json({
+    reply: \`Received: "\${body.message}"\`,
+    quickReplies: [
+      { label: 'Install', value: 'install' },
+      { label: 'Deploy', value: 'deploy' }
+    ]
+  });
+}`}</CodeBlock>
+                    <DocCard title="Request body">
+                        SDK sends <code>message</code>, optional <code>user</code>, optional <code>history</code>, and optional uploaded <code>file</code> data.
+                    </DocCard>
+                    <DocCard title="Connection modes">
+                        Use <code>connection.stream</code> for SSE typewriter responses, or <code>connection.mode: 'websocket'</code> for full-duplex realtime chat.
+                    </DocCard>
+                </div>
+            )}
+
+            {activePanel === 'deploy' && (
+                <div>
+                    <SectionTitle
+                        eyebrow="Vercel"
+                        title="Keep secrets on the server."
+                        description="Deploy the Next.js app normally. Client config should call your own /api/chat endpoint; provider keys stay inside server routes or environment variables."
+                    />
+                    <DocCard title="Recommended settings">
+                        Build command: <code>npm run build</code><br />
+                        Install command: <code>npm install</code><br />
+                        Runtime: Node.js 18+
+                    </DocCard>
+                    <CodeBlock title=".env.local">{`DERIN_SECRET_KEY=server-generated-hmac-secret
+OPENAI_API_KEY=provider-key-stays-server-side
+NEXT_PUBLIC_CHAT_API=/api/chat`}</CodeBlock>
+                    <CodeBlock title="vercel.json">{`{
+  "framework": "nextjs",
+  "buildCommand": "npm run build"
+}`}</CodeBlock>
+                    <DocCard title="Security note">
+                        Do not put private API keys into <code>DerinChat.init</code> on public pages. Proxy requests through a server endpoint and add server-side rate limiting.
+                    </DocCard>
+                </div>
+            )}
         </div>
     );
 }

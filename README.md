@@ -64,7 +64,7 @@ Derin Chat UI revolves around delivering an **unopinionated developer experience
 | 🎙️ **Voice Assistant** | Native Speech-to-Text & Text-to-Speech — no external dependencies |
 | 🎨 **Shadow DOM isolated** | Zero CSS bleed. Your app styles won't break the widget, and the widget won't break your app |
 | 🧩 **Multi-Instance Ready** | Mount multiple isolated widgets simultaneously using `instanceId` + `target` |
-| 📦 **Lightweight** | ~20 KB gzipped including the Preact engine |
+| 📦 **Lightweight** | ~29-33 KB gzipped depending on build format, including the Preact engine |
 | 🔒 **Secure by default** | XSS-safe markdown, URL-protocol allowlisting, rate limiting, HMAC user verification |
 
 ---
@@ -97,6 +97,14 @@ pnpm add derin-chat-ui preact
 ```html
 <script src="https://unpkg.com/derin-chat-ui@1.0.11/dist/index.umd.js"></script>
 ```
+
+**Current production bundle size (v1.0.11 build):**
+
+| Format | File | Raw | Gzip |
+|---|---|---:|---:|
+| ESM | `dist/index.js` | 129.78 KB | 33.29 KB |
+| CJS | `dist/index.cjs` | 99.22 KB | 29.12 KB |
+| UMD | `dist/index.umd.js` | 99.39 KB | 29.16 KB |
 
 ---
 
