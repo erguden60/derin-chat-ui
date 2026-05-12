@@ -157,6 +157,7 @@ export interface ChatConfig {
     openOnLoad?: boolean;
     closeOnOutsideClick?: boolean;
     persistSession?: boolean; // Store in LocalStorage
+    persistSessionId?: boolean; // Store sessionId in LocalStorage
     maxMessages?: number; // Maximum message count
   };
 

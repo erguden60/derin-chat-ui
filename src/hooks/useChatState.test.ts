@@ -112,6 +112,7 @@ const createConfig = (overrides: Partial<ChatConfig> = {}) =>
       openOnLoad: false,
       closeOnOutsideClick: true,
       persistSession: true,
+      persistSessionId: true,
       maxMessages: 100,
       ...overrides.behavior,
     },
@@ -195,6 +196,44 @@ describe('useChatState Hook', () => {
       }),
     ]);
     expect(saveSessionId).toHaveBeenCalledWith(expect.any(String), 'chat-1');
+  });
+
+  it('creates a runtime session id without storage when persistSessionId is false', () => {
+    setupChatState({
+      behavior: {
+        persistSessionId: false,
+      },
+    });
+
+    expect(loadSessionId).not.toHaveBeenCalled();
+    expect(saveSessionId).not.toHaveBeenCalled();
+    expect(latestMessageSenderOptions()).toMatchObject({
+      sessionId: expect.any(String),
+    });
+  });
+
+  it('can disable session id persistence while keeping message history persistence enabled', () => {
+    const persistedMessages = [createMessage('p1', 'bot')];
+    vi.mocked(loadMessages).mockReturnValue(persistedMessages);
+
+    const { result } = setupChatState({
+      features: {
+        history: true,
+      },
+      behavior: {
+        persistSession: false,
+        persistSessionId: false,
+      },
+    });
+
+    expect(result.current.messages).toEqual(persistedMessages);
+    expect(loadSessionId).not.toHaveBeenCalled();
+    expect(saveSessionId).not.toHaveBeenCalled();
+    expect(usePersistence).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: true,
+      })
+    );
   });
 
   it('sends trimmed input through the message sender and resets input state', async () => {

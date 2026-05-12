@@ -10,8 +10,6 @@
 
 > **📦 Current stable:** v1.0.11 &nbsp;|&nbsp; **🚀 Next milestone:** v1.1.0 — [see roadmap](#-developer-roadmap)
 
----
-
 ## 📋 Table of Contents
 
 - [✨ What Makes It Different?](#-what-makes-it-different)
@@ -358,6 +356,7 @@ DerinChat.init({
     openOnLoad: false,           // Auto-open widget on page load    (default: false)
     closeOnOutsideClick: true,   // Close when clicking outside      (default: true)
     persistSession: true,        // Persist messages in localStorage (default: true)
+    persistSessionId: true,      // Persist backend sessionId        (default: true)
     maxMessages: 100,            // Max messages kept in state       (default: 100)
   }
 });
@@ -788,6 +787,10 @@ type ConnectionStatus =
 ## 💾 Session Persistence
 
 When `behavior.persistSession` is `true` (default), the widget uses `localStorage` to persist session data across page reloads.
+
+When `behavior.persistSession` is `false`, the widget does not persist message history, widget open/closed state, or unread badge count. If `features.history` is enabled, history persistence is also enabled even when `behavior.persistSession` is `false`.
+
+`sessionId` is a backend conversation continuity ID. It is attached to HTTP requests and WebSocket payloads so your backend, analytics, or fallback transport can associate messages with the same conversation. By default, `behavior.persistSessionId: true` stores `derin-chat-v1-session-id` in `localStorage` across reloads. Set `behavior.persistSessionId: false` to keep only an in-memory runtime session ID; outgoing payloads still include a `sessionId`, but a page reload creates a new one.
 
 **Storage keys for the default instance:**
 

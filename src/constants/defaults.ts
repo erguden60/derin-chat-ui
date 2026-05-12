@@ -37,6 +37,7 @@ export const DEFAULT_BEHAVIOR = {
   openOnLoad: false,
   closeOnOutsideClick: true,
   persistSession: true,
+  persistSessionId: true,
   maxMessages: 100,
 };
 

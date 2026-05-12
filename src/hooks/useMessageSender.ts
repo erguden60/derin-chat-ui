@@ -279,41 +279,47 @@ export function useMessageSender({
             const decoder = new TextDecoder('utf-8');
 
             let done = false;
+            let sseBuffer = '';
             while (!done) {
               const { value, done: readerDone } = await reader.read();
               done = readerDone;
               
               if (value) {
                 const chunk = decoder.decode(value, { stream: !done });
-                
-                // Parse SSE "data: ..." format
-                const lines = chunk.split('\n');
-                for (const line of lines) {
-                  if ((line || '').trim() === 'data: [DONE]') continue;
-                  if (line.startsWith('data: ')) {
-                     try {
-                        const jsonStr = line.replace('data: ', '');
-                        if (!(jsonStr || '').trim()) continue;
-                        const parsed = JSON.parse(jsonStr);
-                        // Extract text (support OpenAI standard delta.content or our custom reply)
-                        const token = parsed.choices?.[0]?.delta?.content || parsed.reply || parsed.text || '';
-                        accumulatedText += token;
-                     } catch { /* ignore parse errors for partial chunks */ }
-                  } else {
-                     // If it's not SSE format, maybe it's just raw text chunks being flushed
-                     if ((chunk || '').trim() && !chunk.includes('data:')) {
-                        // Assuming raw text flush
-                        // We do a safer assignment here to prevent duplicate appends on same chunk
-                     }
-                  }
-                }
-                
-                if (!chunk.includes('data:')) {
+
+                if (!sseBuffer && !chunk.includes('data:')) {
                    accumulatedText += chunk;
+                } else {
+                  // Parse SSE "data: ..." format. Buffer partial lines because
+                  // JSON payloads can be split across network chunks.
+                  sseBuffer += chunk;
+                  const lines = sseBuffer.split(/\r?\n/);
+                  sseBuffer = done ? '' : lines.pop() || '';
+
+                  for (const line of lines) {
+                    if ((line || '').trim() === 'data: [DONE]') continue;
+                    if (line.startsWith('data: ')) {
+                       try {
+                          const jsonStr = line.replace('data: ', '');
+                          if (!(jsonStr || '').trim()) continue;
+                          const parsed = JSON.parse(jsonStr);
+                          // Extract text (support OpenAI standard delta.content or our custom reply)
+                          const token = parsed.choices?.[0]?.delta?.content || parsed.reply || parsed.text || '';
+                          accumulatedText += token;
+                       } catch { /* ignore parse errors for partial chunks */ }
+                    }
+                  }
                 }
 
                 updateMessage(botMessage.id, { text: accumulatedText, isStreaming: true });
               }
+            }
+
+            if ((sseBuffer || '').trim()) {
+              if (!sseBuffer.includes('data:')) {
+                accumulatedText += sseBuffer;
+              }
+              updateMessage(botMessage.id, { text: accumulatedText, isStreaming: true });
             }
 
             // Stream complete

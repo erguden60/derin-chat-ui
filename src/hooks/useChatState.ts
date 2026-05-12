@@ -15,6 +15,7 @@ export function useChatState(config: Required<ChatConfig>) {
   const instanceId = config.instanceId || 'default';
 
   const shouldPersist = config.features.history || config.behavior.persistSession;
+  const shouldPersistSessionId = config.behavior.persistSessionId;
 
   // Load persisted state
   const persistedMessages = shouldPersist ? loadMessages(instanceId) : null;
@@ -41,10 +42,15 @@ export function useChatState(config: Required<ChatConfig>) {
   const [unreadCount, setUnreadCount] = useState<number>(persistedUnreadCount);
   const [isWsLoading, setIsWsLoading] = useState(false);
 
-  // Session ID — load from storage or generate a new one
+  // Session ID — optionally persisted for backend conversation continuity
   const sessionId = (() => {
+    if (!shouldPersistSessionId) {
+      return crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
     const existing = loadSessionId(instanceId);
     if (existing) return existing;
+
     const newId = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     saveSessionId(newId, instanceId);
     return newId;

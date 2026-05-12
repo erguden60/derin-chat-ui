@@ -30,6 +30,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.11] - 2026-04-19
+
+### Added
+- **Release Refresh** - Published the current v1.0.11 package metadata and docs references.
+- **Developer Docs** - Added a dedicated developer documentation file for SDK integration details.
+
+### Improved
+- **Package Metadata Alignment** - README, dev docs, and demo copy now reference v1.0.11 consistently.
+- **Developer Guidance** - Expanded integration notes for HTTP streaming and WebSocket setup paths.
+
+---
+
+## [1.0.10] - 2026-03-11
+
+### Added
+- **SSE Streaming Mode** - HTTP connections can render incremental streamed responses with `connection.stream`.
+- **OpenAI-Compatible Parsing** - Streaming responses support `choices[0].delta.content` alongside custom `reply` and `text` payloads.
+
+### Improved
+- **Typewriter Experience** - Bot messages can mount immediately and fill in as stream chunks arrive.
+- **Transport Documentation** - README and dev docs describe HTTP, SSE, WebSocket, auto, and mock connection modes.
+
+---
+
+## [1.0.9] - 2026-03-11
+
+### Added
+- **Voice and Experience Controls** - Added voice input/output surfaces and richer demo configuration controls.
+- **Modern Widget UX** - Refined header, launcher, empty state, and connection-aware copy for production embedding.
+
+### Improved
+- **Persistence and Instance Docs** - Documented namespaced storage keys and legacy localStorage migration behavior.
+- **Connection Recovery Messaging** - Improved user-facing feedback around reconnecting and unavailable live connections.
+
+---
+
 ## [1.0.8] - 2025-03-10
 
 ### 🎯 Latest Stable Release

@@ -116,6 +116,7 @@ describe('useMessageSender Hook', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('sends through WebSocket when websocket mode has an available sender', async () => {
@@ -492,6 +493,96 @@ describe('useMessageSender Hook', () => {
       isStreaming: true,
     });
     expect(updateMessage).toHaveBeenCalledWith(streamedMessageId, {
+      isStreaming: false,
+    });
+  });
+
+  it('streams SSE responses split across network chunks', async () => {
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"Hel'));
+        controller.enqueue(encoder.encode('lo"}}]}\n'));
+        controller.enqueue(encoder.encode('data: {"text":" world"}\n'));
+        controller.enqueue(encoder.encode('data: [DONE]\n'));
+        controller.close();
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body,
+      })
+    );
+    const { result, onSuccess, updateMessage } = setupHook(
+      {},
+      createConfig({
+        connection: {
+          mode: 'http',
+          stream: true,
+        },
+      })
+    );
+
+    await act(async () => {
+      await result.current.sendUserMessage('Stream from SSE');
+    });
+
+    const streamedMessageId = onSuccess.mock.calls[0][0].id;
+    expect(updateMessage).toHaveBeenCalledWith(streamedMessageId, {
+      text: 'Hello',
+      isStreaming: true,
+    });
+    expect(updateMessage).toHaveBeenCalledWith(streamedMessageId, {
+      text: 'Hello world',
+      isStreaming: true,
+    });
+    expect(updateMessage).toHaveBeenLastCalledWith(streamedMessageId, {
+      isStreaming: false,
+    });
+  });
+
+  it('streams non-SSE raw text chunks when endpoint does not use event framing', async () => {
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode('plain '));
+        controller.enqueue(encoder.encode('text'));
+        controller.close();
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body,
+      })
+    );
+    const { result, onSuccess, updateMessage } = setupHook(
+      {},
+      createConfig({
+        connection: {
+          mode: 'http',
+          stream: true,
+        },
+      })
+    );
+
+    await act(async () => {
+      await result.current.sendUserMessage('Stream raw text');
+    });
+
+    const streamedMessageId = onSuccess.mock.calls[0][0].id;
+    expect(updateMessage).toHaveBeenCalledWith(streamedMessageId, {
+      text: 'plain ',
+      isStreaming: true,
+    });
+    expect(updateMessage).toHaveBeenCalledWith(streamedMessageId, {
+      text: 'plain text',
+      isStreaming: true,
+    });
+    expect(updateMessage).toHaveBeenLastCalledWith(streamedMessageId, {
       isStreaming: false,
     });
   });

@@ -247,6 +247,7 @@ Validation rules:
     openOnLoad?: boolean; // default: false
     closeOnOutsideClick?: boolean; // default: true
     persistSession?: boolean; // default: true
+    persistSessionId?: boolean; // default: true
     maxMessages?: number; // default: 100
   };
 }
@@ -682,6 +683,10 @@ DerinChat.init({
 
 When `behavior.persistSession` is `true`, the widget uses `localStorage`.
 
+When `behavior.persistSession` is `false`, message history, widget open/closed state, and unread count are not persisted. `features.history: true` also enables history persistence even if `behavior.persistSession` is `false`.
+
+`sessionId` is the backend conversation continuity ID attached to HTTP requests and WebSocket payloads. `behavior.persistSessionId` controls whether `derin-chat-v1-session-id` is stored in `localStorage`. It defaults to `true`; set it to `false` when reloads should start a fresh backend conversation. In that mode, outgoing payloads still include an in-memory `sessionId`, but it is not reused after reload.
+
 Stored keys:
 
 - `derin-chat-v1-messages`
@@ -738,7 +743,7 @@ Primary exported types:
 These are important current-code details that can save debugging time:
 
 - `messageTools` is effectively on by default unless you set it to `false`.
-- `sessionId` exists in storage helpers and request typings, but the current send flow does not actively attach a stored `sessionId` to outgoing requests.
+- `sessionId` is attached to HTTP requests and WebSocket payloads. By default it persists across reloads; set `behavior.persistSessionId: false` for per-page-load backend sessions.
 - `actions` are parsed from backend responses, but there is no UI renderer for action buttons/links yet.
 - `ui.logo` is supported in the header and is overridden by an active agent avatar when present.
 - `ui.texts.mockModeInfo` exists in config defaults, but there is no dedicated mock-mode banner in the current UI.

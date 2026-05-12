@@ -168,6 +168,51 @@ describe('WebSocketManager - Behavioral Tests', () => {
             expect(manager.getStatus()).toBe('connected');
         });
 
+        it('should emit reconnecting attempts with exponential backoff delays', async () => {
+            const manager = new WebSocketManager(defaultConfig);
+            const reconnectingCallback = vi.fn();
+            manager.on('reconnecting', reconnectingCallback);
+
+            manager.connect();
+            MockWebSocket.instances[0].triggerOpen();
+            MockWebSocket.instances[0].triggerClose(1006, 'Abnormal closure');
+
+            expect(reconnectingCallback).toHaveBeenCalledWith(1);
+            vi.advanceTimersByTime(999);
+            expect(MockWebSocket.instances.length).toBe(1);
+
+            vi.advanceTimersByTime(1);
+            expect(MockWebSocket.instances.length).toBe(2);
+
+            MockWebSocket.instances[1].triggerClose(1006, 'Still down');
+            expect(reconnectingCallback).toHaveBeenCalledWith(2);
+
+            vi.advanceTimersByTime(1499);
+            expect(MockWebSocket.instances.length).toBe(2);
+
+            vi.advanceTimersByTime(1);
+            expect(MockWebSocket.instances.length).toBe(3);
+        });
+
+        it('should keep queued messages during reconnect and flush them after recovery', async () => {
+            const manager = new WebSocketManager(defaultConfig);
+            const queuedMessage = { type: 'chat', data: 'queued while offline' } as unknown as WebSocketMessage;
+
+            manager.connect();
+            MockWebSocket.instances[0].triggerOpen();
+            MockWebSocket.instances[0].triggerClose(1006, 'Network lost');
+
+            manager.send(queuedMessage);
+
+            vi.advanceTimersByTime(1000);
+            const recoveredSocket = MockWebSocket.instances[1];
+            expect(recoveredSocket.sendMock).not.toHaveBeenCalled();
+
+            recoveredSocket.triggerOpen();
+
+            expect(recoveredSocket.sendMock).toHaveBeenCalledWith(JSON.stringify(queuedMessage));
+        });
+
         it('should stop reconnecting after max attempts and set status to failed', async () => {
             const manager = new WebSocketManager({
                 ...defaultConfig,
