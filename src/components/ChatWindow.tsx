@@ -1,8 +1,7 @@
 // Chat Window Container
 
 import { useState, useCallback } from 'preact/hooks';
-import type { Message, ChatConfig, ConnectionStatus } from '../types';
-import type { FileAttachment } from './FileUpload';
+import type { AttachmentKind, Message, ChatConfig, ConnectionStatus, FileAttachment } from '../types';
 import { ChatHeader } from './ChatHeader';
 import { ChatMessages } from './ChatMessages';
 import { ChatInput } from './ChatInput';
@@ -29,6 +28,12 @@ interface ChatWindowProps {
   onClearChat?: () => void;
   onStopGenerating?: () => void;
   onReconnect?: () => void;
+}
+
+function getAttachmentKind(file: File): AttachmentKind {
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) return 'pdf';
+  return 'other';
 }
 
 export function ChatWindow({
@@ -58,10 +63,10 @@ export function ChatWindow({
 
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
-    if (config.features?.fileUpload && !isDragging) {
+    if ((config.features?.fileUpload || config.attachments?.enabled) && !isDragging) {
       setIsDragging(true);
     }
-  }, [config.features?.fileUpload, isDragging]);
+  }, [config.features?.fileUpload, config.attachments?.enabled, isDragging]);
 
   const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -74,12 +79,12 @@ export function ChatWindow({
     e.preventDefault();
     setIsDragging(false);
 
-    if (!config.features?.fileUpload) return;
+    if (!config.features?.fileUpload && !config.attachments?.enabled) return;
     
     const file = e.dataTransfer?.files?.[0];
     if (!file) return;
 
-    const maxSize = config.ui?.fileUpload?.maxSize || 10;
+    const maxSize = config.attachments?.maxSize || config.ui?.fileUpload?.maxSize || 10;
     
     if (file.size > maxSize * 1024 * 1024) {
       const msg = (config.ui?.texts?.fileSizeError || 'File must be smaller than {maxSize}MB.')
@@ -88,15 +93,10 @@ export function ChatWindow({
       return;
     }
 
-    let type: 'image' | 'pdf' | 'other' = 'other';
-    if (file.type.startsWith('image/')) {
-       type = 'image';
-    } else if (file.type === 'application/pdf') {
-       type = 'pdf';
-    }
+    const kind = getAttachmentKind(file);
 
     let preview: string | undefined;
-    if (type === 'image') {
+    if (kind === 'image') {
        try {
          preview = await new Promise((resolve, reject) => {
            const reader = new FileReader();
@@ -110,8 +110,15 @@ export function ChatWindow({
        }
     }
 
-    onFileSelect?.({ file, preview, type });
-  }, [config.features?.fileUpload, config.ui?.fileUpload?.maxSize, onError, onFileSelect]);
+    onFileSelect?.({ file, preview, type: kind, kind });
+  }, [
+    config.features?.fileUpload,
+    config.attachments?.enabled,
+    config.attachments?.maxSize,
+    config.ui?.fileUpload?.maxSize,
+    onError,
+    onFileSelect,
+  ]);
 
   // Agent mode check - Get info from last agent message
   const lastAgentMessage = messages
@@ -201,11 +208,14 @@ export function ChatWindow({
         onFileSelect={onFileSelect}
         onFileRemove={onFileRemove}
         onError={onError}
-        enableFileUpload={config.features?.fileUpload}
+        enableFileUpload={config.features?.fileUpload || config.attachments?.enabled}
         maxFileSize={config.ui?.fileUpload?.maxSize}
         acceptFileTypes={config.ui?.fileUpload?.accept}
+        attachmentConfig={config.attachments}
         enableVoiceInput={config.features?.voice?.input}
         voiceLanguage={config.features?.voice?.language}
+        texts={config.ui?.texts}
+        onVoiceError={config.onVoiceError}
         onUserTyping={config.onUserTyping ?? config.events?.onUserTyping}
         disabled={isLoading}
         onChange={onInputChange}

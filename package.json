@@ -1,6 +1,6 @@
 {
   "name": "derin-chat-ui",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Production-grade embeddable AI chat SDK - Built for developers who need reliable chat infrastructure",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -17,6 +17,7 @@
   },
   "files": [
     "dist",
+    "CHANGELOG.md",
     "README.md",
     "LICENSE"
   ],
@@ -52,9 +53,12 @@
   "sideEffects": false,
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:demo": "tsc -b && vite build -c vite.config.demo.ts",
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "clean:demo": "node -e \"require('fs').rmSync('dist-demo', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -b && vite build",
+    "build:demo": "npm run clean:demo && vite build --config vite.demo.config.ts",
     "preview": "vite preview",
+    "preview:demo": "vite preview --config vite.demo.config.ts --outDir dist-demo",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -63,9 +67,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,scss,css}\"",
     "prepublishOnly": "npm run test && npm run build",
     "prepare": "husky"
-  },
-  "peerDependencies": {
-    "preact": ">=10.0.0"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.2",

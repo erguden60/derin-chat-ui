@@ -29,7 +29,7 @@ export interface WebSocketConfig {
     /** Heartbeat/ping interval in milliseconds */
     heartbeatInterval?: number;
 
-    /** Custom headers for WebSocket handshake */
+    /** Custom headers for non-browser adapters/future runtimes. Browser WebSocket APIs ignore custom headers. */
     headers?: Record<string, string>;
 }
 

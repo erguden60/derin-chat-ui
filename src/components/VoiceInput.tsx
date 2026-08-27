@@ -39,13 +39,19 @@ interface VoiceInputProps {
   onError?: (error: string) => void;
   language?: string;
   disabled?: boolean;
+  ariaLabel?: string;
+  startTitle?: string;
+  stopTitle?: string;
 }
 
 export function VoiceInput({
   onResult,
   onError,
-  language = 'tr-TR', // Default to Turkish as requested earlier in context
+  language = 'en-US',
   disabled = false,
+  ariaLabel = 'Voice input',
+  startTitle = 'Start voice input',
+  stopTitle = 'Stop voice input',
 }: VoiceInputProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
@@ -91,6 +97,7 @@ export function VoiceInput({
     } catch (e) {
       setIsSupported(false);
       console.error('Speech recognition initialization failed', e);
+      onError?.('Speech recognition is not available in this browser.');
     }
 
     return () => {
@@ -111,6 +118,7 @@ export function VoiceInput({
       } catch (e) {
         console.error('Failed to start speech recognition', e);
         setIsRecording(false);
+        onError?.('Failed to start speech recognition.');
       }
     }
   };
@@ -124,8 +132,8 @@ export function VoiceInput({
       class={`voice-input-btn ${isRecording ? 'recording' : ''}`}
       onClick={toggleRecording}
       disabled={disabled}
-      title={isRecording ? 'Click to stop recording' : 'Click to speak'}
-      aria-label="Voice Input"
+      title={isRecording ? stopTitle : startTitle}
+      aria-label={ariaLabel}
       type="button"
     >
       <MicIcon />

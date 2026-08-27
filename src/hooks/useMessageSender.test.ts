@@ -104,7 +104,9 @@ const setupHook = (
 const flushTimersAndPromise = async (promise: Promise<void>) => {
   await vi.runAllTimersAsync();
   await promise;
-};
+}; 
+//  testing agelitat 
+ 
 
 describe('useMessageSender Hook', () => {
   beforeEach(() => {
@@ -159,6 +161,7 @@ describe('useMessageSender Hook', () => {
       file: new File(['pdf-content'], 'terms.pdf', { type: 'application/pdf' }),
       preview: 'data:application/pdf;base64,test',
       type: 'pdf',
+      kind: 'pdf',
     };
     const { result } = setupHook(
       {

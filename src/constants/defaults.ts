@@ -14,6 +14,11 @@ export const DEFAULT_TEXTS = {
   errorMessage: 'Connection error. Please try again.',
   rateLimitError: 'You are sending messages too fast. Please wait.',
   mockModeInfo: 'You are in mock mode. No backend connection.',
+  openChat: 'Open chat',
+  closeChat: 'Close chat',
+  welcomeBadge: 'AI assistant',
+  welcomeMessage: 'Hello! How can I help?',
+  welcomeHints: ['Ask a question', 'Upload a file'],
   // Edit actions
   cancel: 'Cancel',
   save: 'Save',
@@ -21,6 +26,22 @@ export const DEFAULT_TEXTS = {
   dropFile: 'Drop file here',
   fileSizeError: 'File must be smaller than {maxSize}MB.',
   imageLoadError: 'Failed to load image.',
+  copy: 'Copy',
+  copied: 'Copied',
+  regenerate: 'Regenerate',
+  readAloud: 'Read aloud',
+  stopSpeaking: 'Stop speaking',
+  helpful: 'Helpful',
+  notHelpful: 'Not helpful',
+  edit: 'Edit',
+  edited: 'edited',
+  voiceInput: 'Voice input',
+  startVoiceInput: 'Start voice input',
+  stopVoiceInput: 'Stop voice input',
+  addFile: 'Add file',
+  selectFile: 'Select file',
+  attachmentType: 'Attachment type',
+  chatWidget: 'Chat widget',
 };
 
 export const DEFAULT_FEATURES = {
@@ -31,7 +52,37 @@ export const DEFAULT_FEATURES = {
   fileUpload: false,
   timestamps: true,
   avatars: true,
+  messageTools: true,
+  voice: {
+    input: false,
+    output: false,
+    language: 'en-US',
+  },
 };
+
+export const DEFAULT_ATTACHMENT_TYPES = [
+  {
+    id: 'image',
+    label: 'Image',
+    accept: 'image/*',
+    kind: 'image' as const,
+    description: 'PNG, JPG, GIF',
+  },
+  {
+    id: 'pdf',
+    label: 'PDF',
+    accept: '.pdf,application/pdf',
+    kind: 'pdf' as const,
+    description: 'PDF documents',
+  },
+  {
+    id: 'document',
+    label: 'Document',
+    accept: '.doc,.docx,.txt,.xls,.xlsx,.csv',
+    kind: 'document' as const,
+    description: 'Docs, sheets, text',
+  },
+];
 
 export const DEFAULT_BEHAVIOR = {
   openOnLoad: false,
@@ -57,10 +108,16 @@ export const DEFAULT_CONFIG = {
     position: 'bottom-right' as const,
     zIndex: 99999,
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    locale: 'en-US',
     theme: 'light' as const,
     layout: 'normal' as const,
     colors: DEFAULT_COLORS,
     texts: DEFAULT_TEXTS,
+  },
+  attachments: {
+    enabled: false,
+    maxSize: 10,
+    types: DEFAULT_ATTACHMENT_TYPES,
   },
   features: DEFAULT_FEATURES,
   behavior: DEFAULT_BEHAVIOR,

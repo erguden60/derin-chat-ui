@@ -26,7 +26,7 @@ export function ChatMessages({
   onFeedback,
   onEdit
 }: ChatMessagesProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const hasOnlyIntroMessage =
     messages.length === 1 && messages[0]?.id === 'intro' && messages[0]?.sender === 'bot';
   const title = config.ui?.texts?.title || 'Support';
@@ -39,11 +39,21 @@ export function ChatMessages({
   const welcomeBadgeText = config.ui?.texts?.welcomeBadge || 'AI assistant';
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const messagesEl = messagesRef.current;
+    if (!messagesEl) return;
+
+    if (typeof messagesEl.scrollTo === 'function') {
+      messagesEl.scrollTo({
+        top: messagesEl.scrollHeight,
+        behavior: 'smooth',
+      });
+    } else {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
   }, [messages, isLoading]);
 
   return (
-    <div class="chat-messages">
+    <div class="chat-messages" ref={messagesRef}>
       {hasOnlyIntroMessage && showWelcomeScreen && (
         <div class="chat-empty-state">
           {welcomeBadgeText && <div class="chat-empty-badge">{welcomeBadgeText}</div>}
@@ -81,8 +91,6 @@ export function ChatMessages({
           </div>
         </div>
       )}
-
-      <div ref={messagesEndRef} />
     </div>
   );
 }

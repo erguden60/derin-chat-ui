@@ -21,6 +21,7 @@ describe('DerinChat Detailed Event System', () => {
         onVisibilityChange: onVisibilityChangeMock,
       }
     });
+    
 
     // the component renders async or mounts need to be flushed.
     // However, vitest happy path works if we trigger simple events or wait for tick
@@ -49,7 +50,8 @@ describe('DerinChat Detailed Event System', () => {
       events: {
         onUserTyping: onUserTypingMock,
       }
-    });
+    }); 
+  
 
     const host = document.getElementById('derin-chat-host');
     const textarea = host?.shadowRoot?.querySelector('textarea');

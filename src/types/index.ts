@@ -3,7 +3,35 @@
 import type { ApiMessageFormat, ApiResponse } from './api';
 import type { ConnectionConfig, ConnectionStatus } from './connection';
 import type { Message } from './message';
-import type { ComponentChild } from 'preact';
+
+export type AttachmentKind = 'image' | 'pdf' | 'document' | 'audio' | 'video' | 'other';
+
+export type DerinChatRenderable =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null
+  | undefined
+  | object
+  | DerinChatRenderable[];
+
+export interface AttachmentTypeConfig {
+  id: string;
+  label: string;
+  accept: string;
+  kind?: AttachmentKind;
+  description?: string;
+}
+
+export interface FileAttachment {
+  file: File;
+  preview?: string;
+  type: string;
+  kind: AttachmentKind;
+  label?: string;
+  metadata?: Record<string, unknown>;
+}
 
 // Unread Badge Configuration
 export interface UnreadBadgeConfig {
@@ -36,6 +64,7 @@ export interface ChatConfig {
   // Instance & Mounting
   instanceId?: string;
   target?: string | HTMLElement;
+  nonce?: string; // Optional CSP nonce for fallback style tag injection
 
   // 1. API & MODE
   apiUrl?: string;
@@ -79,7 +108,7 @@ export interface ChatConfig {
     id?: string;
     name?: string;
     avatar?: string;
-    hash?: string; // HMAC hash for identity verification
+    hash?: string; // Server-generated HMAC hash for backend verification
     metadata?: Record<string, unknown>;
   };
 
@@ -90,6 +119,7 @@ export interface ChatConfig {
     zIndex?: number;
     fontFamily?: string;
     logo?: string;
+    locale?: string; // Used for timestamp formatting, default: 'en-US'
     theme?: 'light' | 'dark' | 'auto';
     layout?: 'normal' | 'compact' | 'full-screen';
     showWelcomeScreen?: boolean; // Enable/disable the empty state welcome screen (default: true)
@@ -143,6 +173,15 @@ export interface ChatConfig {
       stopSpeaking?: string;
       helpful?: string;
       notHelpful?: string;
+      edit?: string;
+      edited?: string;
+      voiceInput?: string;
+      startVoiceInput?: string;
+      stopVoiceInput?: string;
+      addFile?: string;
+      selectFile?: string;
+      attachmentType?: string;
+      chatWidget?: string;
     };
 
     // File Upload Config
@@ -150,6 +189,18 @@ export interface ChatConfig {
       maxSize?: number; // MB
       accept?: string; // MIME types
     };
+  };
+
+  // Attachment UI and file type configuration.
+  // Keeps the default upload menu polished while allowing package consumers
+  // to define their own attachment types and renderers.
+  attachments?: {
+    enabled?: boolean;
+    maxSize?: number; // MB, falls back to ui.fileUpload.maxSize
+    types?: AttachmentTypeConfig[];
+    renderTrigger?: (props: { open: boolean; disabled?: boolean }) => DerinChatRenderable;
+    renderMenuItem?: (type: AttachmentTypeConfig) => DerinChatRenderable;
+    renderPreview?: (attachment: FileAttachment, onRemove: () => void) => DerinChatRenderable;
   };
 
   // 5. BEHAVIOR
@@ -204,5 +255,5 @@ export interface ChatConfig {
 
   // Custom Renderers
   // Can return a Virtual DOM node (Preact/React) or an object { html: '...' } for vanilla JS environments
-  renderCustomMessage?: (message: Message) => ComponentChild | { html: string };
+  renderCustomMessage?: (message: Message) => DerinChatRenderable | { html: string };
 }

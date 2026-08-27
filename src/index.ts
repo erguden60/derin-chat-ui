@@ -5,17 +5,89 @@ import { mergeConfig } from './utils/helpers';
 import type { ChatConfig, Message } from './types';
 import styles from './styles/main.scss?inline';
 
-// Re-export types
-export type { ChatConfig, Message, ApiResponse } from './types';
+// Re-export public SDK types
+export type {
+  AgentInfo,
+  ApiMessageFormat,
+  ApiRequest,
+  ApiResponse,
+  AttachmentKind,
+  AttachmentTypeConfig,
+  ChatConfig,
+  ConnectionConfig,
+  ConnectionMode,
+  ConnectionStatus,
+  DerinChatRenderable,
+  FileAttachment,
+  Message,
+  MessageAction,
+  MessageFile,
+  MessageImage,
+  MessageSender,
+  MockHandlerContext,
+  MockHandlerResult,
+  QuickReply,
+  UnreadBadgeConfig,
+  WebSocketConfig,
+  WebSocketMessage,
+  WebSocketMessageType,
+} from './types';
 
 import { clearMessages } from './utils/storage';
+
+const STYLE_MARKER = 'data-derin-chat-style';
+let sharedStyleSheet: CSSStyleSheet | null = null;
+
+function supportsAdoptedStyleSheets(shadow: ShadowRoot): boolean {
+  return (
+    'adoptedStyleSheets' in shadow &&
+    typeof CSSStyleSheet !== 'undefined' &&
+    typeof CSSStyleSheet.prototype.replaceSync === 'function'
+  );
+}
+
+function getSharedStyleSheet(): CSSStyleSheet {
+  if (!sharedStyleSheet) {
+    sharedStyleSheet = new CSSStyleSheet();
+    sharedStyleSheet.replaceSync(styles);
+  }
+
+  return sharedStyleSheet;
+}
+
+function applyShadowStyles(shadow: ShadowRoot, nonce?: string) {
+  const existingStyle = shadow.querySelector<HTMLStyleElement>(`style[${STYLE_MARKER}]`);
+
+  if (supportsAdoptedStyleSheets(shadow)) {
+    existingStyle?.remove();
+
+    const sheet = getSharedStyleSheet();
+    if (!shadow.adoptedStyleSheets.includes(sheet)) {
+      shadow.adoptedStyleSheets = [...shadow.adoptedStyleSheets, sheet];
+    }
+    return;
+  }
+
+  const styleTag = existingStyle || document.createElement('style');
+  styleTag.setAttribute(STYLE_MARKER, '');
+  if (nonce) {
+    styleTag.nonce = nonce;
+  } else {
+    styleTag.removeAttribute('nonce');
+  }
+  styleTag.textContent = styles;
+
+  if (!existingStyle) {
+    shadow.appendChild(styleTag);
+  }
+}
 
 /**
  * DerinChat - Embeddable AI Chat Widget SDK
 
  * 
- * Singleton Pattern: Only one instance per page is supported.
- * Calling init() multiple times will replace the existing instance.
+ * Multi-instance support: each instance is scoped by instanceId.
+ * Calling init() again with the same instanceId replaces that instance.
  * 
  * @example
  * ```typescript
@@ -109,13 +181,8 @@ class DerinChat {
         shadow = host.attachShadow({ mode: 'open' });
       }
 
-      // Update styles
-      const oldStyle = shadow.querySelector('style');
-      if (oldStyle) oldStyle.remove();
-
-      const styleTag = document.createElement('style');
-      styleTag.textContent = styles;
-      shadow.appendChild(styleTag);
+      // Use constructable stylesheets when available; fallback keeps CSP nonce support.
+      applyShadowStyles(shadow, fullConfig.nonce);
 
       // Render widget using h() instead of JSX
       render(

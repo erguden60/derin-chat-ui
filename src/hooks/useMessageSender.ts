@@ -9,8 +9,8 @@ import type {
   MockHandlerContext,
   ConnectionStatus,
   ApiResponse,
+  FileAttachment,
 } from '../types';
-import type { FileAttachment } from '../components/FileUpload';
 import { sendMessage } from '../utils/api';
 import { parseApiResponse, generateMockResponse } from '../utils/messageParser';
 import { RATE_LIMIT } from '../constants/defaults';

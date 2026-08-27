@@ -54,7 +54,7 @@ export function parseMarkdown(text: string, textsConfig?: { copy?: string }): st
       <div class="derin-code-block" data-lang="${langLabel}">
         <div class="code-header">
           <span class="code-lang">${langLabel}</span>
-          <button class="code-copy-btn" data-raw="${rawCodeEncoded}" data-tooltip="${copyText}">
+          <button type="button" class="code-copy-btn" data-raw="${rawCodeEncoded}" data-tooltip="${copyText}">
              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
              <span class="copy-text">${copyText}</span>
           </button>
@@ -63,7 +63,7 @@ export function parseMarkdown(text: string, textsConfig?: { copy?: string }): st
       </div>
     `;
     codeBlocks.push(blockHtml);
-    return `___CODE_BLOCK_${codeBlocks.length - 1}___`;
+    return `DERINCODEBLOCKTOKEN${codeBlocks.length - 1}END`;
   });
 
   // Now escape HTML for the rest of the text to prevent XSS
@@ -107,7 +107,7 @@ export function parseMarkdown(text: string, textsConfig?: { copy?: string }): st
 
   // Re-inject code blocks
   codeBlocks.forEach((block, index) => {
-    html = html.replace(`___CODE_BLOCK_${index}___`, block);
+    html = html.replace(`DERINCODEBLOCKTOKEN${index}END`, block);
   });
 
   return html;

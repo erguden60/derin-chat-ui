@@ -1,73 +1,55 @@
 // File Preview Component
 
-import type { FileAttachment } from './FileUpload';
+import type { ComponentChild } from 'preact';
+import type { FileAttachment } from '../types';
+import { CloseIcon, FileTextIcon, ImageIcon, PaperclipIcon } from '../icons';
 
 interface FilePreviewProps {
   attachment: FileAttachment;
   onRemove: () => void;
+  renderPreview?: (attachment: FileAttachment, onRemove: () => void) => ComponentChild;
 }
 
-export function FilePreview({ attachment, onRemove }: FilePreviewProps) {
-  const { file, preview, type } = attachment;
+function PreviewIcon({ attachment }: { attachment: FileAttachment }) {
+  if (attachment.kind === 'image') return <ImageIcon />;
+  if (attachment.kind === 'pdf' || attachment.kind === 'document') return <FileTextIcon />;
+  return <PaperclipIcon />;
+}
+
+export function FilePreview({ attachment, onRemove, renderPreview }: FilePreviewProps) {
+  const { file, preview, kind } = attachment;
+
+  if (renderPreview) {
+    return <>{renderPreview(attachment, onRemove)}</>;
+  }
 
   return (
     <div class="file-preview">
       <div class="file-preview-content">
         {/* Image Preview */}
-        {type === 'image' && preview && (
+        {kind === 'image' && preview && (
           <img src={preview} alt={file.name} class="file-preview-image" />
         )}
 
-        {/* PDF Icon */}
-        {type === 'pdf' && (
-          <div class="file-preview-icon pdf">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <text x="12" y="17" text-anchor="middle" font-size="6" fill="white">
-                PDF
-              </text>
-            </svg>
-          </div>
-        )}
-
-        {/* Other Files */}
-        {type === 'other' && (
-          <div class="file-preview-icon other">
-            <svg
-              viewBox="0 0 24 24"
-              width="32"
-              height="32"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-              <polyline points="13 2 13 9 20 9"></polyline>
-            </svg>
+        {!(kind === 'image' && preview) && (
+          <div class={`file-preview-icon ${kind}`}>
+            <PreviewIcon attachment={attachment} />
           </div>
         )}
 
         {/* File Info */}
         <div class="file-preview-info">
           <span class="file-name">{file.name}</span>
-          <span class="file-size">{formatFileSize(file.size)}</span>
+          <span class="file-size">
+            {attachment.label ? `${attachment.label} · ` : ''}
+            {formatFileSize(file.size)}
+          </span>
         </div>
       </div>
 
       {/* Remove Button */}
       <button type="button" class="file-preview-remove" onClick={onRemove} aria-label="Remove file">
-        <svg
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+        <CloseIcon />
       </button>
     </div>
   );

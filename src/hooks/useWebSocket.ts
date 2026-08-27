@@ -77,7 +77,7 @@ export function useWebSocket({ config, onMessage, enabled }: UseWebSocketOptions
         wsManagerRef.current?.disconnect();
     };
 
-    const isConnected = wsManagerRef.current?.isConnected() ?? false;
+    const isConnected = wsManagerRef.current?.isConnected() ?? false; 
 
     return {
         status,

@@ -9,24 +9,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 🚧 v1.1.0 In Progress
+---
 
-#### Added
+## [1.0.13] - 2026-08-09
+
+### Added
 - **Multi-Instance Support** - `instanceId` and `target` let multiple widgets mount on the same page without colliding
 - **Instance-Scoped Persistence** - localStorage keys are now namespaced per widget instance
 - **Mount Target Support** - Widgets can mount into `document.body`, a selector, or an `HTMLElement`
 - **Connection Recovery UX** - reconnecting, connecting, offline, and failed states now surface directly in the UI
+- **UI Lab** - Added a real local embed test bench for widget configuration, contrast, layout, attachment, and host-surface checks
+- **Framework Docs** - Added integration examples for Next.js, React/Vite, Vue, Angular, and vanilla HTML
+- **npm-first README** - Split concise npm usage docs from the long GitHub/developer documentation
+- **Release Checklist** - Added a dedicated checklist for publish readiness and manual QA
 
-#### Improved
-- **Config Validation** - `instanceId` and `target` now receive explicit validation errors
+### Improved
+- **Runtime Config Validation** - `instanceId`, `target`, `ui.theme`, `ui.layout`, `connection.mode`, WebSocket URL, attachment types, file size limits, and message limits now receive clearer validation
 - **Connection Messaging** - WebSocket-only and auto-fallback edge cases now produce clearer system messages
 - **Header Status UX** - Loading and connection states are reflected more accurately in the header
 - **Docs Alignment** - README and developer docs updated to describe modern SDK capabilities
+- **Widget UI Polish** - Improved launcher, chat window, input, quick replies, file upload, error toast, typing indicator, message tools, and edit mode
+- **Dark Theme Quality** - Fixed dark/full-screen contrast issues across welcome badge, message surfaces, input, tool icons, and agent messages
+- **Markdown Rendering** - Fixed fenced code block placeholder leakage and refreshed inline/code block styling
+- **Public Type Exports** - Re-exported commonly needed SDK types such as attachment, connection, message, unread badge, and API types from the package entry point
+- **Consumer Type Safety** - Removed public declaration dependency on Preact types so clean TypeScript consumers can install only `derin-chat-ui`
+- **Defaults Alignment** - Added missing default text and feature values so runtime defaults match documented behavior
+- **Package Docs Accuracy** - Updated bundle size numbers and clarified the bundled Preact distribution model
+- **Attachment API Docs** - Documented the newer `attachments` configuration, default attachment types, and custom attachment render hooks.
+- **Public API Coverage** - Added missing references for `nonce`, welcome screen text options, advanced message callbacks, custom message rendering, `clearHistory`, and `loadMessages`.
+- **Shadow DOM Notes** - Refreshed the Shadow DOM isolation notes to reflect the current `applyShadowStyles` production flow.
 
-#### Testing
+### Testing
 - Added multi-instance initialization/destroy tests
-- Added validation coverage for `instanceId` and `target`
+- Added runtime validation coverage for UI options, connection modes, WebSocket URLs, attachments, behavior limits, color warnings, contrast warnings, API key warnings, and browser WebSocket header warnings
 - Added connection-aware header state test
+- Added markdown regression coverage for fenced code blocks
+- Verified production build, full test suite, npm pack dry-run, clean TypeScript install, ESM import, CJS require, and UMD browser smoke test
+
+---
+
+## [1.0.12] - 2026-06-15
+
+### Improved
+- **Documentation Accuracy** - Aligned README, developer docs, demo copy, and CDN examples with the published v1.0.12 release.
+- **Security Positioning** - Clarified that `user.hash` is forwarded for backend HMAC verification rather than verified inside the browser SDK.
+- **Bundle Metadata** - Updated published bundle size references for the current v1.0.12 build.
+- **Developer Clarity** - Clarified multi-instance SDK behavior and browser WebSocket header limitations.
+
+### Fixed
+- **Session ID Stability** - Kept generated non-persisted session IDs stable across component re-renders.
 
 ---
 
@@ -116,7 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Security Best Practices Section
 - ⚠️ Client-side rate limiting disclaimer
-- 🔒 HMAC user verification guide
+- 🔒 Backend HMAC verification guide
 - 🛡️ CSP configuration
 - 📋 GDPR compliance notes
 - 🚨 XSS protection documentation

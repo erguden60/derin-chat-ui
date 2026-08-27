@@ -12,6 +12,58 @@ interface ChatWidgetProps {
   config: Required<ChatConfig>;
 }
 
+function hexToRgbValue(hex?: string) {
+  if (!hex) return null;
+
+  const clean = hex.replace('#', '').trim();
+  const expanded = clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean;
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return null;
+
+  return `${parseInt(expanded.slice(0, 2), 16)}, ${parseInt(expanded.slice(2, 4), 16)}, ${parseInt(expanded.slice(4, 6), 16)}`;
+}
+
+function normalizeHex(hex?: string) {
+  if (!hex) return null;
+
+  const clean = hex.replace('#', '').trim();
+  const expanded = clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return null;
+  return `#${expanded}`;
+}
+
+function getLuminance(hex: string) {
+  const clean = hex.replace('#', '');
+  const channels = [clean.slice(0, 2), clean.slice(2, 4), clean.slice(4, 6)].map((part) => {
+    const value = parseInt(part, 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+  });
+
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function getContrastRatio(foreground: string, background: string) {
+  const fg = getLuminance(foreground);
+  const bg = getLuminance(background);
+  const light = Math.max(fg, bg);
+  const dark = Math.min(fg, bg);
+
+  return (light + 0.05) / (dark + 0.05);
+}
+
+function getReadableTextColor(text: string, background?: string): string {
+  const normalizedText = normalizeHex(text);
+  const normalizedBackground = normalizeHex(background);
+
+  if (!normalizedText || !normalizedBackground) return text;
+  if (getContrastRatio(normalizedText, normalizedBackground) >= 4.5) return text;
+
+  const blackContrast = getContrastRatio('#111827', normalizedBackground);
+  const whiteContrast = getContrastRatio('#ffffff', normalizedBackground);
+
+  return blackContrast >= whiteContrast ? '#111827' : '#ffffff';
+}
+
 export function ChatWidget({ config }: ChatWidgetProps) {
   const {
     isOpen,
@@ -155,16 +207,24 @@ export function ChatWidget({ config }: ChatWidgetProps) {
       : { right: '20px', left: 'auto', alignItems: 'flex-end' }),
   };
 
-  if (colors.primary) dynamicStyles['--primary'] = colors.primary;
+  if (colors.primary) {
+    dynamicStyles['--primary'] = colors.primary;
+    const primaryRgb = hexToRgbValue(colors.primary);
+    if (primaryRgb) dynamicStyles['--primary-rgb'] = primaryRgb;
+  }
   if (colors.headerBg) dynamicStyles['--header-bg'] = colors.headerBg;
-  if (colors.headerText) dynamicStyles['--header-text'] = colors.headerText;
+  if (colors.headerText) dynamicStyles['--header-text'] = getReadableTextColor(colors.headerText, colors.headerBg);
   if (colors.userMessageBg) dynamicStyles['--user-bg'] = colors.userMessageBg;
-  if (colors.userMessageText) dynamicStyles['--user-text'] = colors.userMessageText;
+  if (colors.userMessageText) dynamicStyles['--user-text'] = getReadableTextColor(colors.userMessageText, colors.userMessageBg);
   if (colors.botMessageBg) dynamicStyles['--bot-bg'] = colors.botMessageBg;
-  if (colors.botMessageText) dynamicStyles['--bot-text'] = colors.botMessageText;
-  if (colors.background) dynamicStyles['--bg-color'] = colors.background;
+  if (colors.botMessageText) dynamicStyles['--bot-text'] = getReadableTextColor(colors.botMessageText, colors.botMessageBg);
+  if (colors.background) {
+    dynamicStyles['--bg-color'] = colors.background;
+    const bgRgb = hexToRgbValue(colors.background);
+    if (bgRgb) dynamicStyles['--bg-color-rgb'] = bgRgb;
+  }
   if (colors.inputBg) dynamicStyles['--input-bg'] = colors.inputBg;
-  if (colors.inputText) dynamicStyles['--input-text'] = colors.inputText;
+  if (colors.inputText) dynamicStyles['--input-text'] = getReadableTextColor(colors.inputText, colors.inputBg);
   if (config.ui?.fontFamily) dynamicStyles['--font-family'] = config.ui.fontFamily;
 
   return (
@@ -173,7 +233,7 @@ export function ChatWidget({ config }: ChatWidgetProps) {
       className={`derin-widget-container derin-theme-${activeTheme} derin-layout-${activeLayout}`}
       style={dynamicStyles}
       role="region"
-      aria-label="Chat widget"
+      aria-label={texts?.chatWidget || 'Chat widget'}
     >
       {isOpen && (
         <div ref={chatWindowRef} style={{ position: 'relative' }}>

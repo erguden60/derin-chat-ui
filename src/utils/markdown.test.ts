@@ -80,6 +80,16 @@ describe('parseMarkdown - XSS Protection', () => {
 
     expect(output).toContain('<br>');
   });
+
+  it('should preserve fenced code blocks after markdown formatting', () => {
+    const input = 'Here is **markdown**:\n\n```ts\nDerinChat.init({ mock: true });\n```';
+    const output = parseMarkdown(input);
+
+    expect(output).toContain('class="derin-code-block"');
+    expect(output).toContain('DerinChat');
+    expect(output).not.toContain('CODE');
+    expect(output).not.toContain('DERINCODEBLOCKTOKEN');
+  });
 });
 
 describe('parseMarkdown - Edge Cases', () => {

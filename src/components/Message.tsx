@@ -29,6 +29,7 @@ export function MessageComponent({
   const isAgent = message.sender === 'agent';
   const showAvatar = config.features.avatars && (isAgent || message.agent);
   const showTimestamp = config.features.timestamps;
+  const texts = config.ui?.texts;
 
   const [mounted, setMounted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -319,11 +320,11 @@ export function MessageComponent({
 
         {showTimestamp && (
           <div class="message-timestamp">
-            {mounted ? new Date(message.timestamp).toLocaleTimeString('tr-TR', {
+            {mounted ? new Date(message.timestamp).toLocaleTimeString(config.ui?.locale || 'en-US', {
               hour: '2-digit',
               minute: '2-digit',
             }) : ''}
-            {message.isEdited && <span class="message-edited-badge"> (düzenlendi)</span>}
+            {message.isEdited && <span class="message-edited-badge"> ({texts?.edited || 'edited'})</span>}
           </div>
         )}
 
@@ -336,7 +337,8 @@ export function MessageComponent({
               <button
                 onClick={() => setIsEditing(true)}
                 class="tool-btn"
-                data-tooltip="Düzenle"
+                data-tooltip={texts?.edit || 'Edit'}
+                aria-label={texts?.edit || 'Edit'}
                 type="button"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -349,8 +351,9 @@ export function MessageComponent({
                 onClick={handleCopy}
                 class="tool-btn"
                 data-tooltip={isCopied 
-                  ? (config.ui?.texts?.copied || 'Copied!') 
-                  : (config.ui?.texts?.copy || 'Copy message')}
+                  ? (texts?.copied || 'Copied!') 
+                  : (texts?.copy || 'Copy message')}
+                aria-label={isCopied ? (texts?.copied || 'Copied!') : (texts?.copy || 'Copy message')}
                 type="button"
               >
                 {isCopied ? (
@@ -366,7 +369,8 @@ export function MessageComponent({
               <button
                 onClick={() => onRegenerate(message.id)}
                 class="tool-btn"
-                data-tooltip={config.ui?.texts?.regenerate || 'Regenerate'}
+                data-tooltip={texts?.regenerate || 'Regenerate'}
+                aria-label={texts?.regenerate || 'Regenerate'}
                 type="button"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m0 0a9 9 0 0 1 9-9m-9 9a9 9 0 0 0 9 9m-9-9h18" strokeDasharray="4 4" /></svg>
@@ -379,8 +383,9 @@ export function MessageComponent({
                 onClick={handleTextToSpeech}
                 class={`tool-btn ${isPlaying ? 'active' : ''}`}
                 data-tooltip={isPlaying 
-                  ? (config.ui?.texts?.stopSpeaking || 'Stop') 
-                  : (config.ui?.texts?.readAloud || 'Read aloud')}
+                  ? (texts?.stopSpeaking || 'Stop') 
+                  : (texts?.readAloud || 'Read aloud')}
+                aria-label={isPlaying ? (texts?.stopSpeaking || 'Stop') : (texts?.readAloud || 'Read aloud')}
                 type="button"
               >
                 <SpeakerIcon />
@@ -389,20 +394,22 @@ export function MessageComponent({
 
             {/* Feedback Buttons */}
             {onFeedback && (
-              <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto', marginRight: '4px' }}>
+              <div class="message-feedback-tools">
                 <button
                   onClick={() => onFeedback(message.id, 'positive')}
-                  class={`tool-btn ${message.feedback === 'positive' ? 'active' : ''}`}
-                  data-tooltip={config.ui?.texts?.helpful || 'Helpful'}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', color: message.feedback === 'positive' ? '#22c55e' : 'inherit' }}
+                  class={`tool-btn feedback-positive ${message.feedback === 'positive' ? 'active' : ''}`}
+                  data-tooltip={texts?.helpful || 'Helpful'}
+                  aria-label={texts?.helpful || 'Helpful'}
+                  type="button"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill={message.feedback === 'positive' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
                 </button>
                 <button
                   onClick={() => onFeedback(message.id, 'negative')}
-                  class={`tool-btn ${message.feedback === 'negative' ? 'active' : ''}`}
-                  data-tooltip={config.ui?.texts?.notHelpful || 'Not helpful'}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', color: message.feedback === 'negative' ? '#ef4444' : 'inherit' }}
+                  class={`tool-btn feedback-negative ${message.feedback === 'negative' ? 'active' : ''}`}
+                  data-tooltip={texts?.notHelpful || 'Not helpful'}
+                  aria-label={texts?.notHelpful || 'Not helpful'}
+                  type="button"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill={message.feedback === 'negative' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>
                 </button>

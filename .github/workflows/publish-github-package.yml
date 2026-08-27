@@ -1,0 +1,63 @@
+name: Publish GitHub Package
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@erguden60'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build package
+        run: npm run build
+
+      - name: Prepare scoped package
+        run: |
+          mkdir github-package
+          cp -R dist README.md CHANGELOG.md LICENSE package.json github-package/
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = 'github-package/package.json';
+          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+          pkg.name = '@erguden60/derin-chat-ui';
+          pkg.publishConfig = {
+            registry: 'https://npm.pkg.github.com'
+          };
+
+          delete pkg.scripts;
+          delete pkg.devDependencies;
+
+          fs.writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
+          NODE
+
+      - name: Publish package
+        working-directory: github-package
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

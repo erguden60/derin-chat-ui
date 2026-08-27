@@ -297,6 +297,7 @@ describe('useChatState Hook', () => {
       file: new File(['image-content'], 'avatar.png', { type: 'image/png' }),
       preview: 'data:image/png;base64,test',
       type: 'image',
+      kind: 'image',
     };
     const { result } = setupChatState();
 

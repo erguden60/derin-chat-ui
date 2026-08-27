@@ -1,23 +1,13 @@
 // Typing Indicator Animation
 
 .typing-indicator {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 2px 0;
-
-  .typing-indicator-label {
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-right: 4px;
-    animation: none;
-    background: transparent;
-    width: auto;
-    height: auto;
-    opacity: 1;
-  }
+  min-width: 36px;
+  min-height: 16px;
+  color: var(--internal-muted-text, #64748b);
 
   .dot {
     display: inline-block;
@@ -42,6 +32,12 @@
   }
 }
 
+.derin-theme-dark {
+  .typing-indicator {
+    color: color-mix(in srgb, var(--internal-muted-text, #94a3b8) 84%, #ffffff);
+  }
+}
+
 @keyframes typing-bounce {
   0%,
   60%,
@@ -50,7 +46,7 @@
     opacity: 0.6;
   }
   30% {
-    transform: translateY(-8px);
+    transform: translateY(-4px);
     opacity: 1;
   }
 }

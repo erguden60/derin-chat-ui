@@ -1,15 +1,21 @@
 // Chat State Management Hook - Main Orchestrator
 
 import { useState, useEffect } from 'preact/hooks';
-import type { ChatConfig, Message } from '../types';
+import type { ChatConfig, FileAttachment, Message } from '../types';
 import type { ApiResponse } from '../types/api';
-import type { FileAttachment } from '../components/FileUpload';
 import { loadMessages, loadIsOpen, loadUnreadCount, loadSessionId, saveSessionId } from '../utils/storage';
 import { useMessages } from './useMessages';
 import { usePersistence } from './usePersistence';
 import { useMessageSender } from './useMessageSender';
 import { useWebSocket } from './useWebSocket';
 import { parseApiResponse } from '../utils/messageParser';
+
+function mapAttachmentKindToMessageFileType(kind: FileAttachment['kind']) {
+  if (kind === 'pdf') return 'pdf';
+  if (kind === 'document') return 'doc';
+  if (kind === 'image') return 'image';
+  return 'other';
+}
 
 export function useChatState(config: Required<ChatConfig>) {
   const instanceId = config.instanceId || 'default';
@@ -43,7 +49,7 @@ export function useChatState(config: Required<ChatConfig>) {
   const [isWsLoading, setIsWsLoading] = useState(false);
 
   // Session ID — optionally persisted for backend conversation continuity
-  const sessionId = (() => {
+  const [sessionId] = useState(() => {
     if (!shouldPersistSessionId) {
       return crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
@@ -54,7 +60,7 @@ export function useChatState(config: Required<ChatConfig>) {
     const newId = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     saveSessionId(newId, instanceId);
     return newId;
-  })();
+  });
 
   // Message management
   const { messages, addMessage, updateMessage, clearMessages, setMessagesList, createUserMessage } = useMessages({
@@ -191,16 +197,16 @@ export function useChatState(config: Required<ChatConfig>) {
     }
 
     const userMessage = createUserMessage(currentInput, {
-      ...(fileAttachment?.type === 'image' && fileAttachment.preview
+      ...(fileAttachment?.kind === 'image' && fileAttachment.preview
         ? { image: { url: fileAttachment.preview, alt: fileAttachment.file.name } }
         : {}),
-      ...(fileAttachment && fileAttachment.type !== 'image'
+      ...(fileAttachment && fileAttachment.kind !== 'image'
         ? {
             file: {
               url: fileAttachment.preview || '',
               name: fileAttachment.file.name,
               size: fileAttachment.file.size,
-              type: fileAttachment.type,
+              type: mapAttachmentKindToMessageFileType(fileAttachment.kind),
             },
           }
         : {}),

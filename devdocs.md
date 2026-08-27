@@ -1,6 +1,6 @@
 # derin-chat-ui Developer Docs
 
-**Version:** 1.0.11  
+**Version:** 1.0.13  
 **License:** MIT  
 **Repository:** [github.com/erguden60/derin-chat-ui](https://github.com/erguden60/derin-chat-ui)
 
@@ -28,10 +28,12 @@ This document describes the API and runtime behavior of `derin-chat-ui` based on
 ## 1. Install
 
 ```bash
-npm install derin-chat-ui preact
+npm install derin-chat-ui
+yarn add derin-chat-ui
+pnpm add derin-chat-ui
 ```
 
-`preact >= 10` is a peer dependency.
+Preact is bundled into the distributed SDK output. Consumers do not need to install `preact` separately unless they are contributing to this repository. Public TypeScript declarations are also clean-install safe and do not require consumer projects to install Preact types.
 
 ---
 
@@ -70,7 +72,7 @@ export default function ChatWidget() {
 ### Vanilla HTML
 
 ```html
-<script src="https://unpkg.com/derin-chat-ui@1.0.11/dist/index.umd.js"></script>
+<script src="https://unpkg.com/derin-chat-ui@1.0.13/dist/index.umd.js"></script>
 <script>
   window.DerinChat.init({
     apiUrl: 'https://api.example.com/chat',
@@ -127,6 +129,7 @@ DerinChat.isActive('support');
 {
   instanceId?: string; // default: 'default'
   target?: string | HTMLElement; // default: 'body'
+  nonce?: string; // CSP nonce for fallback <style> injection
 }
 ```
 
@@ -152,7 +155,7 @@ DerinChat.isActive('support');
       reconnectInterval?: number; // default: 3000
       maxReconnectAttempts?: number; // default: 5, 0 = infinite
       heartbeatInterval?: number; // default: 30000
-      headers?: Record<string, string>;
+      headers?: Record<string, string>; // Browser WebSocket APIs ignore custom headers
     };
   };
   messageFormat?: {
@@ -205,8 +208,10 @@ Validation rules:
     zIndex?: number; // default: 99999
     fontFamily?: string;
     logo?: string;
+    locale?: string; // default: 'en-US'
     theme?: 'light' | 'dark' | 'auto'; // default: 'light'
     layout?: 'normal' | 'compact' | 'full-screen'; // default: 'normal'
+    showWelcomeScreen?: boolean; // default: true
     colors?: {
       primary?: string; // default: '#4F46E5'
       headerBg?: string;
@@ -230,6 +235,30 @@ Validation rules:
       mockModeInfo?: string;
       openChat?: string;
       closeChat?: string;
+      welcomeBadge?: string;
+      welcomeMessage?: string;
+      welcomeHints?: string[];
+      cancel?: string;
+      save?: string;
+      dropFile?: string;
+      fileSizeError?: string;
+      imageLoadError?: string;
+      copy?: string;
+      copied?: string;
+      regenerate?: string;
+      readAloud?: string;
+      stopSpeaking?: string;
+      helpful?: string;
+      notHelpful?: string;
+      edit?: string;
+      edited?: string;
+      voiceInput?: string;
+      startVoiceInput?: string;
+      stopVoiceInput?: string;
+      addFile?: string;
+      selectFile?: string;
+      attachmentType?: string;
+      chatWidget?: string;
     };
     fileUpload?: {
       maxSize?: number; // MB
@@ -253,7 +282,32 @@ Validation rules:
 }
 ```
 
-### 4.6 User
+### 4.6 Attachments
+
+Use `attachments` for new integrations. It owns the configurable upload menu, attachment type list, max size, and custom renderers. The older `features.fileUpload` + `ui.fileUpload` path remains supported only for backward compatibility.
+
+```ts
+{
+  attachments?: {
+    enabled?: boolean; // default: false
+    maxSize?: number; // MB, default: 10
+    types?: Array<{
+      id: string;
+      label: string;
+      accept: string;
+      kind?: 'image' | 'pdf' | 'document' | 'audio' | 'video' | 'other';
+      description?: string;
+    }>;
+    renderTrigger?: (props: { open: boolean; disabled?: boolean }) => DerinChatRenderable;
+    renderMenuItem?: (type: AttachmentTypeConfig) => DerinChatRenderable;
+    renderPreview?: (attachment: FileAttachment, onRemove: () => void) => DerinChatRenderable;
+  };
+}
+```
+
+Default attachment types are Image, PDF, and Document. Prefer `attachments.enabled: true`; use `features.fileUpload` only when maintaining an older integration.
+
+### 4.7 User
 
 ```ts
 {
@@ -411,6 +465,7 @@ Standard HTTP mode sends:
 ```ts
 {
   message: string;
+  sessionId?: string;
   user?: {
     id?: string;
     name?: string;
@@ -490,6 +545,7 @@ Outgoing user message:
   "data": {
     "text": "Hello",
     "user": { "id": "u1" },
+    "sessionId": "session-id",
     "timestamp": "2026-03-23T10:00:00.000Z"
   }
 }
@@ -648,6 +704,7 @@ Currently wired callbacks:
 {
   onMessageSent?: (message: string) => void;
   onMessageReceived?: (response: unknown) => void;
+  onBeforeMessageSend?: (message: string) => string | Promise<string>;
   onChatOpened?: () => void;
   onChatClosed?: () => void;
   onError?: (error: Error) => void;
@@ -656,8 +713,11 @@ Currently wired callbacks:
   onReconnected?: () => void;
   onUnreadCountChange?: (count: number) => void;
   onMessageCopy?: (messageId: string, text: string) => void;
+  onMessageEdit?: (messageId: string, newContent: string) => void;
+  onRegenerate?: (messageId: string) => void;
   onFeedback?: (messageId: string, type: 'positive' | 'negative') => void;
   onChatClear?: () => void;
+  renderCustomMessage?: (message: Message) => DerinChatRenderable | { html: string };
 }
 ```
 
@@ -716,7 +776,8 @@ Legacy default-instance keys are migrated automatically:
 import DerinChat, {
   type ChatConfig,
   type Message,
-  type ApiResponse
+  type ApiResponse,
+  type DerinChatRenderable
 } from 'derin-chat-ui';
 ```
 
@@ -725,7 +786,11 @@ Primary exported types:
 - `ChatConfig`
 - `Message`
 - `ApiResponse`
+- `DerinChatRenderable`
+- attachment helper types such as `AttachmentKind`, `AttachmentTypeConfig`, and `FileAttachment`
 - connection and message helper types re-exported from `src/types`
+
+Clean install verification covers public type imports without a consumer `preact` dependency, plus ESM, CJS, and UMD smoke tests.
 
 ---
 
@@ -744,12 +809,13 @@ These are important current-code details that can save debugging time:
 
 - `messageTools` is effectively on by default unless you set it to `false`.
 - `sessionId` is attached to HTTP requests and WebSocket payloads. By default it persists across reloads; set `behavior.persistSessionId: false` for per-page-load backend sessions.
+- `attachments.enabled` is the modern attachment UI entry point; `features.fileUpload` + `ui.fileUpload` is preserved for backward compatibility only.
 - `actions` are parsed from backend responses, but there is no UI renderer for action buttons/links yet.
 - `ui.logo` is supported in the header and is overridden by an active agent avatar when present.
 - `ui.texts.mockModeInfo` exists in config defaults, but there is no dedicated mock-mode banner in the current UI.
-- `onVoiceError` exists in the public type definition, but the current voice input path reports errors through the widget `onError` display path instead of firing `onVoiceError`.
+- `onVoiceError` fires for voice input errors. The same message is also shown through the widget error display path when available.
 - in `auto` mode, fallback to HTTP only happens after WebSocket reaches `failed` or `disconnected`; while reconnecting, sends may still queue through WebSocket.
 
 ---
 
-*Verified against the repository source on March 23, 2026.*
+*Verified against the repository source on July 28, 2026.*

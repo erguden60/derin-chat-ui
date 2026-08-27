@@ -20,11 +20,17 @@ export default defineConfig({
       exclude: [
         'src/**/*.spec.ts',
         'src/**/*.test.ts',
+        'src/**/*.spec.tsx',
+        'src/**/*.test.tsx',
+        'src/setupTests.ts',
+        'src/dev-entry.tsx',
+        'src/main.tsx',
+        'src/app.tsx',
+        'src/pages/**',
         '**/*.config.ts',
         '**/*.config.tsx',
         '**/vite.config.*',
         'vite.config.*',
-        'vite.config.demo.ts',
         'tsconfig.*.json',
         'vite-env.d.ts',
         'src/vite-env.d.ts',
@@ -37,6 +43,18 @@ export default defineConfig({
       gzipSize: true,
       open: false,
     }),
+    // Dev-only: redirect / to dev.html so index.html (Vercel deploy) stays untouched
+    {
+      name: 'dev-html-redirect',
+      configureServer(server) {
+        server.middlewares.use((req, _res, next) => {
+          if (req.url === '/' || req.url === '/index.html') {
+            req.url = '/dev.html';
+          }
+          next();
+        });
+      },
+    },
   ],
 
   test: {

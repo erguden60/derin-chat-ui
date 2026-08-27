@@ -53,6 +53,7 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
   --internal-surface-strong: color-mix(in srgb, var(--internal-bg-color) 92%, #e0e7ff);
   --internal-shadow-color: color-mix(in srgb, var(--primary, #4f46e5) 18%, rgba(15, 23, 42, 0.24));
   --internal-muted-text: #64748b;
+  --internal-focus-ring: rgba(var(--primary-rgb, 79, 70, 229), 0.18);
 
   &.derin-theme-dark {
     // If user passes explicit inline var (like --bg-color), it STILL wins! Otherwise fallback to Dark Mode
@@ -69,6 +70,7 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     --internal-surface-strong: color-mix(in srgb, var(--internal-bg-color) 78%, #0f172a);
     --internal-shadow-color: rgba(15, 23, 42, 0.52);
     --internal-muted-text: #94a3b8;
+    --internal-focus-ring: rgba(var(--primary-rgb, 96, 165, 250), 0.24);
   }
 }
 
@@ -85,7 +87,7 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
   min-width: 0;
   max-width: 170px;
   padding: 12px 14px;
-  border-radius: 18px;
+  border-radius: 14px;
   border: 1px solid var(--internal-panel-border);
   background: color-mix(in srgb, var(--internal-bg-color) 94%, white);
   color: var(--internal-bot-text);
@@ -112,12 +114,19 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     transform: translateY(-1px);
     box-shadow: 0 22px 32px -26px var(--internal-shadow-color);
   }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 4px var(--internal-focus-ring),
+      0 22px 32px -26px var(--internal-shadow-color);
+  }
 }
 
 /* --- Launcher (Round Button) --- */
 .chat-launcher {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   background:
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), transparent 38%),
     linear-gradient(
@@ -128,7 +137,7 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     );
   color: white;
   border-radius: 50%;
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--primary, #4f46e5) 28%, white);
   cursor: pointer;
   box-shadow:
     0 16px 38px -18px var(--internal-shadow-color),
@@ -183,8 +192,8 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     transition: transform 0.28s ease;
 
     svg {
-      width: 23px;
-      height: 23px;
+      width: 22px;
+      height: 22px;
     }
   }
 
@@ -225,12 +234,20 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
         color-mix(in srgb, var(--internal-header-bg) 90%, #0f172a) 100%
       );
   }
+
+  .derin-theme-dark & {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--internal-bg-color) 92%, #111827) 0%,
+      var(--internal-bg-color) 100%
+    );
+  }
 }
 
 /* --- Chat Window --- */
 .chat-window {
-  width: 360px;
-  height: 600px;
+  width: 380px;
+  height: 620px;
   max-height: 80vh;
 
   // Dynamic background color (Dark Mode / Light Mode mapping)
@@ -239,7 +256,7 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     color-mix(in srgb, var(--internal-bg-color) 94%, white) 0%,
     var(--internal-bg-color) 100%
   );
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow:
     0 34px 70px -36px var(--internal-shadow-color),
     0 20px 36px -28px rgba(15, 23, 42, 0.38);
@@ -266,10 +283,19 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     height: 140px;
     background: radial-gradient(
       circle at top left,
-      color-mix(in srgb, var(--primary, #4f46e5) 12%, white) 0%,
+      color-mix(in srgb, var(--primary, #4f46e5) 8%, white) 0%,
       transparent 60%
     );
     pointer-events: none;
+  }
+
+  .derin-theme-dark &::before {
+    background: radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--primary, #60a5fa) 10%, var(--internal-bg-color, #0f172a)) 0%,
+      transparent 62%
+    );
+    opacity: 0.28;
   }
 
   &.is-open {
@@ -288,21 +314,33 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     .chat-header h3 { font-size: 14px; }
     
     .chat-messages {
-      padding: 12px;
+      padding: 14px;
       flex: 1 1 auto;
       min-height: 0; // Fix Flexbox overflow issue
     }
 
     .chat-input-area {
-      padding: 10px 12px; // Slightly tighter padding
+      gap: 6px;
+      padding: 10px; // Slightly tighter padding
 
-      textarea {
-        padding: 8px 12px; // Slightly tighter input
+      .file-upload-btn {
+        width: 32px;
+        height: 32px;
       }
 
+      .chat-input-field {
+        padding: 5px 5px 5px 10px;
+        border-radius: 16px;
+      }
+
+      textarea {
+        padding: 5px 3px; // Slightly tighter input
+      }
+
+      .voice-input-btn,
       .send-btn {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
       }
     }
   }
@@ -332,7 +370,7 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     color: var(--internal-header-text);
-    padding: 18px 18px 16px;
+    padding: 16px 18px 15px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -369,8 +407,8 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     }
 
     .header-logo {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       object-fit: cover;
       background: rgba(255, 255, 255, 0.18);
@@ -392,15 +430,15 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
       font-size: 12px;
       line-height: 1;
       opacity: 0.88;
-      color: rgba(255, 255, 255, 0.86);
+      color: color-mix(in srgb, var(--internal-header-text) 78%, var(--internal-header-bg));
     }
 
     .close-btn {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: color-mix(in srgb, var(--internal-header-text) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--internal-header-text) 12%, transparent);
       color: inherit;
       cursor: pointer;
       padding: 0;
@@ -414,18 +452,18 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
         background 0.2s ease;
 
       &.secondary {
-        background: rgba(255, 255, 255, 0.08);
+        background: color-mix(in srgb, var(--internal-header-text) 6%, transparent);
       }
 
       &:hover {
         opacity: 1;
         transform: translateY(-1px);
-        background: rgba(255, 255, 255, 0.18);
+        background: color-mix(in srgb, var(--internal-header-text) 12%, transparent);
       }
 
       &:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--internal-header-text) 18%, transparent);
       }
     }
   }
@@ -506,6 +544,14 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     gap: 4px;
     scroll-behavior: smooth;
 
+    .derin-theme-dark & {
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        color-mix(in srgb, var(--internal-bg-color) 92%, #0f172a) 100%
+      );
+    }
+
     &::-webkit-scrollbar {
       width: 8px;
     }
@@ -533,6 +579,12 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
+      }
+
+      .derin-theme-dark & .chat-empty-badge {
+        background: color-mix(in srgb, var(--primary, #60a5fa) 16%, var(--internal-bg-color, #0f172a));
+        border: 1px solid color-mix(in srgb, var(--primary, #60a5fa) 24%, var(--internal-panel-border, #334155));
+        color: color-mix(in srgb, var(--primary, #60a5fa) 76%, #ffffff);
       }
 
       h4 {
@@ -568,17 +620,21 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
 
     .message {
       max-width: min(82%, 520px);
+      min-width: 0;
       padding: 12px 14px;
-      border-radius: 18px;
+      border-radius: 16px;
       font-size: 14px;
-      line-height: 1.55;
+      line-height: 1.58;
       word-wrap: break-word;
+      overflow-wrap: anywhere;
+      word-break: break-word;
 
-      &.bot {
+      &.bot,
+      &.agent {
         align-self: flex-start;
         background: var(--internal-bot-bg);
         color: var(--internal-bot-text);
-        border: 1px solid color-mix(in srgb, var(--internal-bot-bg) 72%, #dbe4ff);
+        border: 1px solid color-mix(in srgb, var(--internal-bot-bg) 70%, var(--internal-panel-border));
         border-bottom-left-radius: 6px;
         box-shadow: 0 12px 22px -20px rgba(15, 23, 42, 0.45);
       }
@@ -731,4 +787,3 @@ $shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
 .derin-theme-dark .chat-window .chat-drag-overlay {
     background: rgba(30,30,30, 0.9);
 }
-

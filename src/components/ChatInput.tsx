@@ -2,9 +2,10 @@
 
 import { useEffect, useRef } from 'preact/hooks';
 import { SendIcon, StopIcon } from '../icons';
-import { FileUpload, type FileAttachment } from './FileUpload';
+import { FileUpload } from './FileUpload';
 import { FilePreview } from './FilePreview';
 import { VoiceInput } from './VoiceInput';
+import type { ChatConfig, FileAttachment } from '../types';
 
 interface ChatInputProps {
   value: string;
@@ -20,8 +21,11 @@ interface ChatInputProps {
   enableFileUpload?: boolean;
   maxFileSize?: number;
   acceptFileTypes?: string;
+  attachmentConfig?: Required<ChatConfig>['attachments'];
   enableVoiceInput?: boolean;
   voiceLanguage?: string;
+  texts?: Required<ChatConfig>['ui']['texts'];
+  onVoiceError?: (error: string) => void;
   onUserTyping?: () => void;
 }
 
@@ -39,11 +43,15 @@ export function ChatInput({
   enableFileUpload = true,
   maxFileSize,
   acceptFileTypes,
+  attachmentConfig,
   enableVoiceInput = false,
-  voiceLanguage = 'tr-TR',
+  voiceLanguage = 'en-US',
+  texts,
+  onVoiceError,
   onUserTyping,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const canSend = Boolean(((value || '').trim() || fileAttachment) && !disabled);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -57,7 +65,7 @@ export function ChatInput({
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      if (canSend) onSend();
     }
   };
 
@@ -67,39 +75,41 @@ export function ChatInput({
     onChange(newValue);
   };
 
-  const canSend = ((value || '').trim() || fileAttachment) && !disabled;
+  const handleVoiceError = (message: string) => {
+    onVoiceError?.(message);
+    onError?.(message);
+  };
 
   return (
     <div class="chat-input-wrapper">
       {/* File Preview */}
       {fileAttachment && onFileRemove && (
-        <FilePreview attachment={fileAttachment} onRemove={onFileRemove} />
+        <FilePreview
+          attachment={fileAttachment}
+          onRemove={onFileRemove}
+          renderPreview={attachmentConfig?.renderPreview}
+        />
       )}
 
       {/* Input Area */}
       <div class="chat-input-area">
         {/* Left Actions */}
-        {(enableFileUpload || enableVoiceInput) && (
+        {enableFileUpload && onFileSelect && (
           <div class="chat-input-actions">
-            {/* File Upload Button */}
-            {enableFileUpload && onFileSelect && (
-              <FileUpload
-                onFileSelect={onFileSelect}
-                onError={onError}
-                maxSize={maxFileSize}
-                accept={acceptFileTypes}
-              />
-            )}
-
-            {/* Voice Input Button */}
-            {enableVoiceInput && (
-              <VoiceInput 
-                onResult={handleVoiceResult} 
-                onError={onError} 
-                language={voiceLanguage}
-                disabled={disabled}
-              />
-            )}
+            <FileUpload
+              onFileSelect={onFileSelect}
+              onError={onError}
+              maxSize={attachmentConfig?.maxSize || maxFileSize}
+              accept={acceptFileTypes}
+              attachmentTypes={attachmentConfig?.types}
+              renderTrigger={attachmentConfig?.renderTrigger}
+              renderMenuItem={attachmentConfig?.renderMenuItem}
+              labels={{
+                addFile: texts?.addFile,
+                selectFile: texts?.selectFile,
+                attachmentType: texts?.attachmentType,
+              }}
+            />
           </div>
         )}
 
@@ -118,18 +128,32 @@ export function ChatInput({
             aria-label="Type your message"
             rows={1}
           />
-        </div>
 
-        {/* Send / Stop Button */}
-        {disabled && onStopGenerating ? (
-          <button onClick={onStopGenerating} aria-label="Stop generating" class="send-btn stop-btn" type="button">
-            <StopIcon />
-          </button>
-        ) : (
-          <button onClick={onSend} disabled={!canSend} aria-label="Send message" class="send-btn" type="button">
-            <SendIcon />
-          </button>
-        )}
+          <div class="chat-input-inline-actions">
+            {enableVoiceInput && (
+              <VoiceInput
+                onResult={handleVoiceResult}
+                onError={handleVoiceError}
+                language={voiceLanguage}
+                disabled={disabled}
+                ariaLabel={texts?.voiceInput}
+                startTitle={texts?.startVoiceInput}
+                stopTitle={texts?.stopVoiceInput}
+              />
+            )}
+
+            {/* Send / Stop Button */}
+            {disabled && onStopGenerating ? (
+              <button onClick={onStopGenerating} aria-label="Stop generating" class="send-btn stop-btn" type="button">
+                <StopIcon />
+              </button>
+            ) : (
+              <button onClick={onSend} disabled={!canSend} aria-label="Send message" class="send-btn" type="button">
+                <SendIcon />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

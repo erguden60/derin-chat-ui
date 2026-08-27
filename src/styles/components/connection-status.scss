@@ -3,14 +3,15 @@
 .connection-status {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     font-size: 11px;
-    padding: 4px 8px;
+    padding: 4px 8px 4px 7px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: color-mix(in srgb, var(--internal-header-text, #ffffff) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--internal-header-text, #ffffff) 16%, transparent);
     margin-left: 2px;
     backdrop-filter: blur(8px);
+    color: color-mix(in srgb, var(--internal-header-text, #ffffff) 86%, var(--internal-header-bg, #4f46e5));
 
     .status-dot {
         width: 7px;
@@ -21,23 +22,26 @@
     }
 
     .status-label {
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.88);
+        font-weight: 650;
+        color: currentColor;
     }
 
     // Connection states
     &.connected .status-dot {
         animation: none;
+        background: #22c55e;
     }
 
     &.connecting .status-dot,
     &.reconnecting .status-dot {
         animation: pulse 1.5s ease-in-out infinite;
+        background: #f59e0b;
     }
 
     &.disconnected .status-dot,
     &.failed .status-dot {
         animation: none;
+        background: #ef4444;
     }
 }
 

@@ -20,7 +20,7 @@ export interface ApiRequest {
     id?: string;
     name?: string;
     avatar?: string;
-    hash?: string; // HMAC hash
+    hash?: string; // Server-generated HMAC hash for backend verification
     metadata?: Record<string, unknown>;
   };
   history?: Array<{
