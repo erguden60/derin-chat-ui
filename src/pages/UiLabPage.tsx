@@ -7,6 +7,15 @@ type Scenario = 'welcome' | 'conversation' | 'long' | 'markdown' | 'media' | 'ag
 type QaPreset = 'idle' | 'loading' | 'error' | 'connection' | 'streaming';
 type FrameworkTab = 'json' | 'vanilla' | 'react' | 'next' | 'vite' | 'cdn';
 type ConnectionStudioMode = 'mock' | 'http' | 'websocket' | 'streaming';
+type SectionId =
+  | 'studio'
+  | 'appearance'
+  | 'copy'
+  | 'features'
+  | 'behavior'
+  | 'connection'
+  | 'attachments'
+  | 'contrast';
 
 interface LabState {
   scenario: Scenario;
@@ -35,8 +44,6 @@ interface LabState {
   inputText: string;
   logo: string;
   fontFamily: string;
-  locale: string;
-  zIndex: number;
   apiUrl: string;
   websocketUrl: string;
   reconnectInterval: number;
@@ -44,7 +51,11 @@ interface LabState {
   attachmentMaxSize: number;
   customAttachmentTypes: boolean;
   messageFormatTextField: string;
+  messageFormatImageField: string;
   messageFormatQuickRepliesField: string;
+  messageFormatActionsField: string;
+  messageFormatAgentField: string;
+  messageFormatTypeField: string;
   maxMessages: number;
   features: {
     markdown: boolean;
@@ -84,18 +95,136 @@ type LabPalette = Pick<
 
 const INSTANCE_ID = 'ui-lab-widget';
 const now = new Date('2026-07-28T10:00:00.000Z').toISOString();
+const LAB_PREVIEW_STYLE_ID = 'ui-lab-preview-shadow-overrides';
+const defaultFontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const fontFamilyOptions = [
+  { label: 'System', value: defaultFontFamily },
+  { label: 'Clean sans', value: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
+  { label: 'Classic UI', value: 'Arial, Helvetica, sans-serif' },
+  { label: 'Mono', value: '"SFMono-Regular", Consolas, "Liberation Mono", monospace' },
+];
+function getLabPreviewStyles(viewport: LabState['viewport']) {
+  const mobilePreviewStyles =
+    viewport === 'mobile'
+      ? `
+    .derin-widget-container {
+      padding: 10px;
+      align-items: stretch !important;
+    }
+
+    .derin-widget-container > div[style] {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .chat-window {
+      border: 1px solid var(--internal-panel-border) !important;
+      border-radius: 16px !important;
+      transform: scale(0.98) translateY(14px) !important;
+    }
+
+    .chat-window.is-open {
+      transform: scale(1) translateY(0) !important;
+    }
+`
+      : '';
+
+  return `
+  .derin-widget-container {
+    position: absolute !important;
+    inset: 0 !important;
+    box-sizing: border-box;
+    justify-content: flex-end;
+    padding: 20px;
+    pointer-events: none;
+  }
+
+  .derin-widget-container > * {
+    pointer-events: auto;
+  }
+
+  .derin-widget-container > div[style] {
+    position: relative !important;
+    display: flex !important;
+    min-height: 0 !important;
+    width: min(380px, 100%) !important;
+    height: min(620px, 100%) !important;
+  }
+
+  .chat-window {
+    box-sizing: border-box !important;
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+  }
+
+  .derin-layout-compact > div[style] {
+    width: min(320px, 100%) !important;
+    height: min(480px, 100%) !important;
+  }
+
+  .derin-layout-full-screen {
+    align-items: stretch !important;
+    justify-content: stretch;
+  }
+
+  .derin-layout-full-screen > div[style] {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .derin-layout-full-screen .chat-window {
+    position: relative !important;
+    inset: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform: scale(0.98) translateY(12px) !important;
+  }
+
+  .derin-layout-full-screen .chat-window.is-open {
+    transform: scale(1) translateY(0) !important;
+  }
+
+  @media (max-width: 480px) {
+    .chat-window {
+      position: relative !important;
+      inset: auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-height: none !important;
+    }
+
+${mobilePreviewStyles}
+  }
+`;
+}
 
 const lightPalette: LabPalette = {
-  primary: '#2563eb',
-  headerBg: '#ffffff',
-  headerText: '#111827',
+  primary: '#4F46E5',
+  headerBg: '#4F46E5',
+  headerText: '#ffffff',
   background: '#ffffff',
-  botMessageBg: '#f8fafc',
+  botMessageBg: '#ffffff',
   botMessageText: '#1f2937',
-  userMessageBg: '#2563eb',
+  userMessageBg: '#4F46E5',
   userMessageText: '#ffffff',
-  inputBg: '#f8fafc',
+  inputBg: '#f9fafb',
   inputText: '#111827',
+};
+
+const darkPalette: LabPalette = {
+  primary: '#4F46E5',
+  headerBg: '#4F46E5',
+  headerText: '#ffffff',
+  background: '#1f2937',
+  botMessageBg: '#374151',
+  botMessageText: '#f9fafb',
+  userMessageBg: '#4F46E5',
+  userMessageText: '#ffffff',
+  inputBg: '#374151',
+  inputText: '#f9fafb',
 };
 
 const initialState: LabState = {
@@ -107,16 +236,14 @@ const initialState: LabState = {
   layout: 'normal',
   theme: 'light',
   position: 'bottom-right',
-  title: 'Derin Chat',
-  subtitle: 'Online support',
+  title: 'Support',
+  subtitle: 'Online',
   placeholder: 'Type your message...',
   welcomeBadge: 'AI assistant',
-  welcomeMessage: 'How can I help you today?',
-  welcomeHints: 'Order status, Track package, Return policy',
+  welcomeMessage: 'Hello! How can I help?',
+  welcomeHints: 'Ask a question, Upload a file',
   logo: '',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  locale: 'en-US',
-  zIndex: 99999,
+  fontFamily: defaultFontFamily,
   apiUrl: 'https://api.example.com/chat',
   websocketUrl: 'wss://api.example.com/chat',
   reconnectInterval: 3000,
@@ -124,7 +251,11 @@ const initialState: LabState = {
   attachmentMaxSize: 10,
   customAttachmentTypes: false,
   messageFormatTextField: 'reply',
+  messageFormatImageField: 'image',
   messageFormatQuickRepliesField: 'quickReplies',
+  messageFormatActionsField: 'actions',
+  messageFormatAgentField: 'agent',
+  messageFormatTypeField: 'type',
   maxMessages: 100,
   features: {
     markdown: true,
@@ -213,9 +344,9 @@ const scenarioMessages: Record<Scenario, Message[]> = {
       },
       file: {
         url: '#',
-        name: 'support-summary.pdf',
+        name: 'support-screenshot.png',
         size: 245000,
-        type: 'pdf',
+        type: 'image',
       },
     },
   ],
@@ -386,21 +517,38 @@ function Field({
 }
 
 function Section({
+  id,
   title,
   eyebrow,
+  collapsed = false,
+  onToggle,
   children,
 }: {
+  id: SectionId;
   title: string;
   eyebrow?: string;
+  collapsed?: boolean;
+  onToggle?: (id: SectionId) => void;
   children: ComponentChildren;
 }) {
   return (
-    <section class="ui-lab-panel">
+    <section class={`ui-lab-panel ${collapsed ? 'is-collapsed' : ''}`}>
       <div class="ui-lab-panel-title">
-        {eyebrow && <span>{eyebrow}</span>}
-        <h2>{title}</h2>
+        <button
+          type="button"
+          class="ui-lab-panel-toggle"
+          aria-expanded={!collapsed}
+          aria-controls={`ui-lab-panel-body-${id}`}
+          onClick={() => onToggle?.(id)}
+        >
+          <span>{eyebrow}</span>
+          <h2>{title}</h2>
+          <i aria-hidden="true" />
+        </button>
       </div>
-      {children}
+      <div id={`ui-lab-panel-body-${id}`} class="ui-lab-panel-body" hidden={collapsed}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -594,7 +742,6 @@ function buildConfig(state: LabState, includeFunctions = true): ChatConfig {
       voice: {
         input: state.features.voiceInput,
         output: state.features.voiceOutput,
-        language: state.locale,
       },
     },
     attachments: {
@@ -606,9 +753,7 @@ function buildConfig(state: LabState, includeFunctions = true): ChatConfig {
       theme: state.theme,
       layout: state.layout,
       position: state.position,
-      zIndex: state.zIndex,
       fontFamily: state.fontFamily,
-      locale: state.locale,
       logo: state.logo,
       showWelcomeScreen: state.features.showWelcomeScreen,
       colors: {
@@ -650,7 +795,11 @@ function buildConfig(state: LabState, includeFunctions = true): ChatConfig {
     },
     messageFormat: {
       textField: state.messageFormatTextField,
+      imageField: state.messageFormatImageField,
       quickRepliesField: state.messageFormatQuickRepliesField,
+      actionsField: state.messageFormatActionsField,
+      agentField: state.messageFormatAgentField,
+      typeField: state.messageFormatTypeField,
     },
     unreadBadge,
     user: {
@@ -770,8 +919,6 @@ function getWidgetConfigSignature(state: LabState) {
     inputText: state.inputText,
     logo: state.logo,
     fontFamily: state.fontFamily,
-    locale: state.locale,
-    zIndex: state.zIndex,
     apiUrl: state.apiUrl,
     websocketUrl: state.websocketUrl,
     reconnectInterval: state.reconnectInterval,
@@ -779,7 +926,11 @@ function getWidgetConfigSignature(state: LabState) {
     attachmentMaxSize: state.attachmentMaxSize,
     customAttachmentTypes: state.customAttachmentTypes,
     messageFormatTextField: state.messageFormatTextField,
+    messageFormatImageField: state.messageFormatImageField,
     messageFormatQuickRepliesField: state.messageFormatQuickRepliesField,
+    messageFormatActionsField: state.messageFormatActionsField,
+    messageFormatAgentField: state.messageFormatAgentField,
+    messageFormatTypeField: state.messageFormatTypeField,
     maxMessages: state.maxMessages,
     features: state.features,
     behavior: state.behavior,
@@ -790,8 +941,24 @@ function getMessageSignature(state: LabState) {
   return `${state.scenario}:${state.qaPreset}`;
 }
 
+function applyLabPreviewStyles(viewport: LabState['viewport']) {
+  const host = document.getElementById(`derin-chat-host-${INSTANCE_ID}`);
+  const shadow = host?.shadowRoot;
+  if (!shadow) return;
+
+  let style = shadow.getElementById(LAB_PREVIEW_STYLE_ID) as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement('style');
+    style.id = LAB_PREVIEW_STYLE_ID;
+    shadow.appendChild(style);
+  }
+
+  style.textContent = getLabPreviewStyles(viewport);
+}
+
 export function UiLabPage() {
   const [state, setState] = useState<LabState>(initialState);
+  const [collapsedSections, setCollapsedSections] = useState<Partial<Record<SectionId, boolean>>>({});
   const [configCopied, setConfigCopied] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLElement>(null);
@@ -823,8 +990,10 @@ export function UiLabPage() {
 
     DerinChat.destroy(INSTANCE_ID);
     DerinChat.init(config);
+    applyLabPreviewStyles(state.viewport);
     if (initialMessages.length > 0) {
       window.setTimeout(() => {
+        applyLabPreviewStyles(state.viewport);
         DerinChat.loadMessages(initialMessages, INSTANCE_ID);
       }, 0);
     }
@@ -837,6 +1006,10 @@ export function UiLabPage() {
 
     return () => DerinChat.destroy(INSTANCE_ID);
   }, [config, initialMessages]);
+
+  useEffect(() => {
+    applyLabPreviewStyles(state.viewport);
+  }, [state.viewport]);
 
   const keepPreviewAnchored = () => {
     window.requestAnimationFrame(() => {
@@ -860,8 +1033,25 @@ export function UiLabPage() {
     keepPreviewAnchored();
   };
 
+  const toggleSection = (id: SectionId) => {
+    setCollapsedSections((current) => ({
+      ...current,
+      [id]: !current[id],
+    }));
+  };
+
+  const hasCollapsedSections = Object.values(collapsedSections).some(Boolean);
+
+  const changeTheme = (theme: LabState['theme']) => {
+    patchState({
+      theme,
+      ...(theme === 'dark' ? darkPalette : lightPalette),
+    });
+  };
+
   const reset = () => {
     setState(initialState);
+    setCollapsedSections({});
     sidebarRef.current?.scrollTo({ top: 0, left: 0 });
     previewRef.current?.scrollTo({ top: 0, left: 0 });
     window.scrollTo(0, 0);
@@ -883,10 +1073,24 @@ export function UiLabPage() {
             <span>Derin Config Studio</span>
             <h1>Customize, preview, export</h1>
           </div>
-          <button type="button" onClick={reset}>Reset</button>
+          <div class="ui-lab-header-actions">
+            <button type="button" onClick={() => setCollapsedSections(hasCollapsedSections ? {} : {
+              studio: true,
+              appearance: true,
+              copy: true,
+              features: true,
+              behavior: true,
+              connection: true,
+              attachments: true,
+              contrast: true,
+            })}>
+              {hasCollapsedSections ? 'Expand' : 'Collapse'}
+            </button>
+            <button type="button" onClick={reset}>Reset</button>
+          </div>
         </div>
 
-        <Section title="Studio flow" eyebrow="Start">
+        <Section id="studio" title="Studio flow" eyebrow="Start" collapsed={!!collapsedSections.studio} onToggle={toggleSection}>
           <Field label="Scenario">
             <select value={state.scenario} onChange={(event) => patchState({ scenario: event.currentTarget.value as Scenario })}>
               <option value="welcome">Welcome</option>
@@ -908,7 +1112,7 @@ export function UiLabPage() {
           </Field>
         </Section>
 
-        <Section title="Appearance" eyebrow="Widget">
+        <Section id="appearance" title="Appearance" eyebrow="Widget" collapsed={!!collapsedSections.appearance} onToggle={toggleSection}>
           <div class="ui-lab-grid-two">
             <Field label="Layout">
               <select value={state.layout} onChange={(event) => patchState({ layout: event.currentTarget.value as LabState['layout'] })}>
@@ -924,19 +1128,24 @@ export function UiLabPage() {
               </select>
             </Field>
           </div>
+          <div class="ui-lab-grid-two">
+            <Field label="Theme">
+              <select value={state.theme} onChange={(event) => changeTheme(event.currentTarget.value as LabState['theme'])}>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto</option>
+              </select>
+            </Field>
+            <Field label="Font family">
+              <select value={state.fontFamily} onChange={(event) => patchState({ fontFamily: event.currentTarget.value })}>
+                {fontFamilyOptions.map((option) => (
+                  <option value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
           <Field label="Logo URL">
             <input value={state.logo} placeholder="https://..." onInput={(event) => patchState({ logo: event.currentTarget.value })} />
-          </Field>
-          <Field label="Font family">
-            <input value={state.fontFamily} onInput={(event) => patchState({ fontFamily: event.currentTarget.value })} />
-          </Field>
-          <Field label="Locale">
-            <select value={state.locale} onChange={(event) => patchState({ locale: event.currentTarget.value })}>
-              <option value="en-US">en-US</option>
-              <option value="tr-TR">tr-TR</option>
-              <option value="de-DE">de-DE</option>
-              <option value="fr-FR">fr-FR</option>
-            </select>
           </Field>
           <ColorField label="Primary" value={state.primary} onChange={(primary) => patchState({ primary, userMessageBg: primary })} />
           <ColorField label="Header background" value={state.headerBg} onChange={(headerBg) => patchState({ headerBg })} />
@@ -950,7 +1159,7 @@ export function UiLabPage() {
           <ColorField label="Input text" value={state.inputText} onChange={(inputText) => patchState({ inputText })} />
         </Section>
 
-        <Section title="Copy and i18n" eyebrow="Text">
+        <Section id="copy" title="Copy and i18n" eyebrow="Text" collapsed={!!collapsedSections.copy} onToggle={toggleSection}>
           <Field label="Title">
             <input value={state.title} onInput={(event) => patchState({ title: event.currentTarget.value })} />
           </Field>
@@ -971,7 +1180,7 @@ export function UiLabPage() {
           </Field>
         </Section>
 
-        <Section title="Features" eyebrow="Toggles">
+        <Section id="features" title="Features" eyebrow="Toggles" collapsed={!!collapsedSections.features} onToggle={toggleSection}>
           <ToggleField label="Welcome screen" checked={state.features.showWelcomeScreen} onChange={(showWelcomeScreen) => patchFeatures({ showWelcomeScreen })} />
           <ToggleField label="Markdown" checked={state.features.markdown} onChange={(markdown) => patchFeatures({ markdown })} />
           <ToggleField label="Quick replies" checked={state.features.quickReplies} onChange={(quickReplies) => patchFeatures({ quickReplies })} />
@@ -986,7 +1195,7 @@ export function UiLabPage() {
           <ToggleField label="Unread badge" checked={state.features.unreadBadge} onChange={(unreadBadge) => patchFeatures({ unreadBadge })} />
         </Section>
 
-        <Section title="Behavior" eyebrow="Runtime">
+        <Section id="behavior" title="Behavior" eyebrow="Runtime" collapsed={!!collapsedSections.behavior} onToggle={toggleSection}>
           <ToggleField label="Open on load" checked={state.behavior.openOnLoad} onChange={(openOnLoad) => patchBehavior({ openOnLoad })} />
           <ToggleField label="Close on outside click" checked={state.behavior.closeOnOutsideClick} onChange={(closeOnOutsideClick) => patchBehavior({ closeOnOutsideClick })} />
           <ToggleField label="Persist session" checked={state.behavior.persistSession} onChange={(persistSession) => patchBehavior({ persistSession })} />
@@ -996,7 +1205,7 @@ export function UiLabPage() {
           </Field>
         </Section>
 
-        <Section title="Connection" eyebrow="Backend">
+        <Section id="connection" title="Connection" eyebrow="Backend" collapsed={!!collapsedSections.connection} onToggle={toggleSection}>
           <Field label="Mode">
             <select value={state.connectionMode} onChange={(event) => patchState({ connectionMode: event.currentTarget.value as ConnectionStudioMode })}>
               <option value="mock">Mock</option>
@@ -1023,20 +1232,36 @@ export function UiLabPage() {
             <Field label="Text field">
               <input value={state.messageFormatTextField} onInput={(event) => patchState({ messageFormatTextField: event.currentTarget.value })} />
             </Field>
+            <Field label="Image field">
+              <input value={state.messageFormatImageField} onInput={(event) => patchState({ messageFormatImageField: event.currentTarget.value })} />
+            </Field>
+          </div>
+          <div class="ui-lab-grid-two">
             <Field label="Replies field">
               <input value={state.messageFormatQuickRepliesField} onInput={(event) => patchState({ messageFormatQuickRepliesField: event.currentTarget.value })} />
+            </Field>
+            <Field label="Actions field">
+              <input value={state.messageFormatActionsField} onInput={(event) => patchState({ messageFormatActionsField: event.currentTarget.value })} />
+            </Field>
+          </div>
+          <div class="ui-lab-grid-two">
+            <Field label="Agent field">
+              <input value={state.messageFormatAgentField} onInput={(event) => patchState({ messageFormatAgentField: event.currentTarget.value })} />
+            </Field>
+            <Field label="Type field">
+              <input value={state.messageFormatTypeField} onInput={(event) => patchState({ messageFormatTypeField: event.currentTarget.value })} />
             </Field>
           </div>
         </Section>
 
-        <Section title="Attachments" eyebrow="Files">
+        <Section id="attachments" title="Attachments" eyebrow="Files" collapsed={!!collapsedSections.attachments} onToggle={toggleSection}>
           <ToggleField label="Custom type menu" checked={state.customAttachmentTypes} onChange={(customAttachmentTypes) => patchState({ customAttachmentTypes })} />
           <Field label="Max file size">
             <input type="number" min="1" value={state.attachmentMaxSize} onInput={(event) => patchState({ attachmentMaxSize: Number(event.currentTarget.value) })} />
           </Field>
         </Section>
 
-        <Section title="Contrast checks" eyebrow="A11y">
+        <Section id="contrast" title="Contrast checks" eyebrow="A11y" collapsed={!!collapsedSections.contrast} onToggle={toggleSection}>
           <ContrastRow label="Header" foreground={state.headerText} background={state.headerBg} />
           <ContrastRow label="Bot message" foreground={state.botMessageText} background={state.botMessageBg} />
           <ContrastRow label="User message" foreground={state.userMessageText} background={state.userMessageBg} />

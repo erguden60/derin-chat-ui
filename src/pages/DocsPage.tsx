@@ -159,16 +159,51 @@ function DocSection({ id, children }: { id: string; children: ComponentChildren 
 
 export function DocsPage() {
   const [active, setActive] = useState<DocSection>('install');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window === 'undefined' || !window.matchMedia('(max-width: 860px)').matches
+  );
+  const activeIndex = tocItems.findIndex((item) => item.id === active);
+  const activeLabel = tocItems.find((item) => item.id === active)?.label || 'Documentation';
+  const activeCount = activeIndex >= 0 ? `${activeIndex + 1} / ${tocItems.length}` : '';
 
   const scrollTo = (id: DocSection) => {
     setActive(id);
     const el = document.getElementById(`doc-${id}`);
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (window.matchMedia('(max-width: 860px)').matches) {
+      setSidebarOpen(false);
+    }
   };
 
   return (
     <div class={`docs-layout ${sidebarOpen ? '' : 'is-sidebar-collapsed'}`}>
+      <div class="docs-mobile-nav">
+        <button
+          type="button"
+          class="docs-mobile-menu-button"
+          aria-label="Open documentation navigation"
+          aria-expanded={sidebarOpen}
+          aria-controls="docs-sidebar-content"
+          onClick={() => setSidebarOpen(true)}
+        >
+          <span class="docs-sidebar-toggle-lines" aria-hidden="true" />
+        </button>
+        <div class="docs-mobile-current">
+          <span>Current section</span>
+          <strong>{activeLabel}</strong>
+        </div>
+        <span class="docs-mobile-count">{activeCount}</span>
+      </div>
+
+      {sidebarOpen && (
+        <button
+          type="button"
+          class="docs-sidebar-backdrop"
+          aria-label="Close documentation navigation"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside class="docs-sidebar">
         <button
@@ -176,13 +211,14 @@ export function DocsPage() {
           class="docs-sidebar-toggle"
           aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           aria-expanded={sidebarOpen}
+          aria-controls="docs-sidebar-content"
           onClick={() => setSidebarOpen((open) => !open)}
         >
           <span class="docs-sidebar-toggle-lines" aria-hidden="true" />
           <span class="docs-sidebar-toggle-text">{sidebarOpen ? 'Collapse' : 'Menu'}</span>
         </button>
 
-        <div class="docs-sidebar-content">
+        <div class="docs-sidebar-content" id="docs-sidebar-content">
           {sections.map(group => (
             <div class="docs-nav-group" key={group.group}>
               <div class="docs-nav-label">{group.group}</div>
