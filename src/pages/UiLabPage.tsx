@@ -216,6 +216,78 @@ function getLabPreviewStyles(viewport: LabState['viewport']) {
 
 ${mobilePreviewStyles}
   }
+
+  /* Lab-only: system/error runtime surfaces need theme-derived AA contrast.
+     SDK leaves .message.system unstyled, so dark theme inherits near-black host text. */
+  .chat-window .message.system {
+    align-self: flex-start;
+    background: var(--ui-lab-error-bg, color-mix(in srgb, #ef4444 10%, var(--internal-bg-color, #ffffff))) !important;
+    color: var(--ui-lab-error-fg, color-mix(in srgb, #991b1b 78%, var(--internal-bot-text, #1f2937))) !important;
+    border: 1px solid var(--ui-lab-error-border, color-mix(in srgb, #ef4444 28%, var(--internal-panel-border, #e5e7eb))) !important;
+    border-left: 3px solid var(--ui-lab-error-accent, #ef4444) !important;
+    border-bottom-left-radius: 6px;
+    font-weight: 650;
+    box-shadow: 0 12px 22px -20px rgba(15, 23, 42, 0.45);
+  }
+
+  .error-toast {
+    background: var(--ui-lab-error-bg, color-mix(in srgb, #ef4444 10%, var(--internal-bg-color, #ffffff))) !important;
+    border-color: var(--ui-lab-error-border, color-mix(in srgb, #ef4444 28%, var(--internal-panel-border, #e5e7eb))) !important;
+  }
+
+  .error-text {
+    color: var(--ui-lab-error-fg, color-mix(in srgb, #991b1b 78%, var(--internal-bot-text, #1f2937))) !important;
+  }
+
+  .error-close {
+    color: var(--ui-lab-error-fg, color-mix(in srgb, #991b1b 70%, var(--internal-muted-text, #64748b))) !important;
+  }
+
+  .chat-connection-banner.is-failed,
+  .chat-connection-banner.is-disconnected {
+    background: var(--ui-lab-error-bg, color-mix(in srgb, #ef4444 10%, var(--internal-surface-strong, #ffffff))) !important;
+  }
+
+  .chat-connection-banner.is-failed .chat-connection-copy strong,
+  .chat-connection-banner.is-disconnected .chat-connection-copy strong {
+    color: var(--ui-lab-error-fg, color-mix(in srgb, #991b1b 78%, var(--internal-bot-text, #1f2937))) !important;
+  }
+
+  .derin-theme-dark .chat-window .message.system {
+    background: var(--ui-lab-error-bg-dark, color-mix(in srgb, #ef4444 18%, var(--internal-bg-color, #0f172a))) !important;
+    color: var(--ui-lab-error-fg-dark, color-mix(in srgb, #fee2e2 70%, var(--internal-bot-text, #f9fafb))) !important;
+    border-color: var(--ui-lab-error-border-dark, color-mix(in srgb, #ef4444 40%, var(--internal-panel-border, #334155))) !important;
+  }
+
+  .derin-theme-dark .error-toast {
+    background: var(--ui-lab-error-bg-dark, color-mix(in srgb, #ef4444 18%, var(--internal-bg-color, #0f172a))) !important;
+    border-color: var(--ui-lab-error-border-dark, color-mix(in srgb, #ef4444 40%, var(--internal-panel-border, #334155))) !important;
+  }
+
+  .derin-theme-dark .error-text {
+    color: var(--ui-lab-error-fg-dark, color-mix(in srgb, #fee2e2 70%, var(--internal-bot-text, #f9fafb))) !important;
+  }
+
+  .derin-theme-dark .error-close {
+    color: var(--ui-lab-error-fg-dark, #fecaca) !important;
+    background: color-mix(in srgb, var(--internal-bg-color, #0f172a) 80%, #ef4444 12%) !important;
+    border-color: var(--ui-lab-error-border-dark, color-mix(in srgb, #ef4444 36%, var(--internal-panel-border, #334155))) !important;
+  }
+
+  .derin-theme-dark .chat-connection-banner.is-failed,
+  .derin-theme-dark .chat-connection-banner.is-disconnected {
+    background: var(--ui-lab-error-bg-dark, color-mix(in srgb, #ef4444 16%, var(--internal-surface-strong, #0f172a))) !important;
+  }
+
+  .derin-theme-dark .chat-connection-banner.is-failed .chat-connection-copy strong,
+  .derin-theme-dark .chat-connection-banner.is-disconnected .chat-connection-copy strong {
+    color: var(--ui-lab-error-fg-dark, color-mix(in srgb, #fee2e2 70%, var(--internal-bot-text, #f9fafb))) !important;
+  }
+
+  .derin-theme-dark .chat-connection-banner.is-failed .chat-connection-copy span,
+  .derin-theme-dark .chat-connection-banner.is-disconnected .chat-connection-copy span {
+    color: color-mix(in srgb, #fecaca 55%, var(--internal-muted-text, #94a3b8)) !important;
+  }
 `;
 }
 
