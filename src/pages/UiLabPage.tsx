@@ -670,7 +670,6 @@ function buildMockConfig(state: LabState): Pick<ChatConfig, 'mock' | 'connection
       mock: false,
       apiUrl: state.apiUrl,
       connection: {
-        mode: 'http',
         stream: true,
       },
     };
@@ -683,7 +682,6 @@ function buildMockConfig(state: LabState): Pick<ChatConfig, 'mock' | 'connection
           `Streaming response for **${message}**.\n\nThe widget should keep the input disabled while this answer arrives and render the final markdown cleanly.\n\n\`\`\`ts\nDerinChat.init({\n  connection: { stream: true },\n  mock: true\n});\n\`\`\``,
       },
       connection: {
-        mode: 'http',
         stream: true,
       },
     };
@@ -847,7 +845,6 @@ function buildExportConfig(state: LabState) {
       ? {
           apiUrl: state.apiUrl,
           connection: {
-            mode: 'http' as const,
             stream: true,
           },
         }
