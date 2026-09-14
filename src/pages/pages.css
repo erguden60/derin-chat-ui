@@ -2600,6 +2600,17 @@ body.ui-lab-body-lock {
   transform: translateZ(0);
 }
 
+/* Host tokens inherited into the open preview shadow (lab error contrast only). */
+#derin-chat-host-ui-lab-widget {
+  --ui-lab-error-accent: #ef4444;
+  --ui-lab-error-fg: color-mix(in srgb, #991b1b 78%, #1f2937);
+  --ui-lab-error-bg: color-mix(in srgb, #ef4444 10%, #ffffff);
+  --ui-lab-error-border: color-mix(in srgb, #ef4444 28%, #e5e7eb);
+  --ui-lab-error-fg-dark: #fee2e2;
+  --ui-lab-error-bg-dark: color-mix(in srgb, #ef4444 18%, #0f172a);
+  --ui-lab-error-border-dark: color-mix(in srgb, #ef4444 40%, #334155);
+}
+
 .ui-lab-preview-placeholder {
   position: absolute;
   inset: 0;
