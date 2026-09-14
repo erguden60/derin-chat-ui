@@ -94,6 +94,8 @@ type LabPalette = Pick<
 >;
 
 const INSTANCE_ID = 'ui-lab-widget';
+/** Stable id for UI Lab export snippets (init + destroy must match). */
+const EXPORT_INSTANCE_ID = 'support-chat';
 const now = new Date('2026-07-28T10:00:00.000Z').toISOString();
 const LAB_PREVIEW_STYLE_ID = 'ui-lab-preview-shadow-overrides';
 const defaultFontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -855,6 +857,7 @@ function buildExportConfig(state: LabState) {
   };
 
   return stripEmpty({
+    instanceId: EXPORT_INSTANCE_ID,
     ...transport,
     features: full.features,
     attachments: full.attachments,
@@ -880,11 +883,11 @@ function generateCode(state: LabState, tab: FrameworkTab) {
   }
 
   if (tab === 'react') {
-    return `import { useEffect } from 'react';\nimport DerinChat from 'derin-chat-ui';\n\nconst chatConfig = ${json};\n\nexport function SupportChat() {\n  useEffect(() => {\n    DerinChat.init(chatConfig);\n    return () => DerinChat.destroy(chatConfig.instanceId);\n  }, []);\n\n  return null;\n}`;
+    return `import { useEffect } from 'react';\nimport DerinChat from 'derin-chat-ui';\n\nconst chatConfig = ${json};\n\nexport function SupportChat() {\n  useEffect(() => {\n    DerinChat.init(chatConfig);\n    return () => DerinChat.destroy('${EXPORT_INSTANCE_ID}');\n  }, []);\n\n  return null;\n}`;
   }
 
   if (tab === 'next') {
-    return `'use client';\n\nimport { useEffect } from 'react';\nimport DerinChat from 'derin-chat-ui';\n\nconst chatConfig = ${json};\n\nexport default function DerinChatClient() {\n  useEffect(() => {\n    DerinChat.init(chatConfig);\n    return () => DerinChat.destroy(chatConfig.instanceId);\n  }, []);\n\n  return null;\n}`;
+    return `'use client';\n\nimport { useEffect } from 'react';\nimport DerinChat from 'derin-chat-ui';\n\nconst chatConfig = ${json};\n\nexport default function DerinChatClient() {\n  useEffect(() => {\n    DerinChat.init(chatConfig);\n    return () => DerinChat.destroy('${EXPORT_INSTANCE_ID}');\n  }, []);\n\n  return null;\n}`;
   }
 
   if (tab === 'vite') {
