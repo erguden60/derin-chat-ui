@@ -228,10 +228,7 @@ export async function POST(request: NextRequest) {
     code: `DerinChat.init({
   instanceId: 'streaming-chat',
   apiUrl: '/api/chat/stream',
-  connection: {
-    mode: 'sse',
-    stream: true,
-  },
+  connection: { stream: true },
   ui: {
     theme: 'light',
     texts: {
