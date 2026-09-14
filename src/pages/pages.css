@@ -2600,6 +2600,45 @@ body.ui-lab-body-lock {
   transform: translateZ(0);
 }
 
+.ui-lab-preview-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.ui-lab-preview-placeholder-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 320px;
+  padding: 18px 20px;
+  border: 1px solid #d8dee9;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.45);
+  text-align: center;
+}
+
+.ui-lab-preview-placeholder-card strong {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.ui-lab-preview-placeholder-card p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 #derin-chat-host-ui-lab-widget {
   position: absolute;
   inset: 0;

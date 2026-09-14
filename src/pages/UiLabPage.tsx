@@ -96,6 +96,24 @@ type LabPalette = Pick<
 const INSTANCE_ID = 'ui-lab-widget';
 const now = new Date('2026-07-28T10:00:00.000Z').toISOString();
 const LAB_PREVIEW_STYLE_ID = 'ui-lab-preview-shadow-overrides';
+
+/** Host-only: lab page freezes document scroll via this class (+ possible leftover inline styles). */
+function clearUiLabBodyLock() {
+  document.body.classList.remove('ui-lab-body-lock');
+  document.documentElement.classList.remove('ui-lab-body-lock');
+
+  // Clear stuck host styles that can leave the site unclickable after close / route change.
+  for (const el of [document.body, document.documentElement]) {
+    if (el.style.overflow) el.style.overflow = '';
+    if (el.style.pointerEvents) el.style.pointerEvents = '';
+  }
+}
+
+function applyUiLabBodyLock() {
+  document.body.classList.add('ui-lab-body-lock');
+  document.documentElement.classList.add('ui-lab-body-lock');
+}
+
 const defaultFontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const fontFamilyOptions = [
   { label: 'System', value: defaultFontFamily },
@@ -957,6 +975,7 @@ export function UiLabPage() {
   const [state, setState] = useState<LabState>(initialState);
   const [collapsedSections, setCollapsedSections] = useState<Partial<Record<SectionId, boolean>>>({});
   const [configCopied, setConfigCopied] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(initialState.behavior.openOnLoad);
   const sidebarRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLElement>(null);
   const widgetConfigSignature = useMemo(() => getWidgetConfigSignature(state), [state]);
@@ -964,18 +983,37 @@ export function UiLabPage() {
   const configText = useMemo(() => generateCode(state, state.frameworkTab), [state]);
   const initialMessages = useMemo(() => getInitialLabMessages(state), [messageSignature]);
 
-  const config = useMemo<ChatConfig>(
-    () => buildConfig(state),
-    [widgetConfigSignature]
-  );
+  const config = useMemo<ChatConfig>(() => {
+    const base = buildConfig(state);
+    return {
+      ...base,
+      onChatOpened: () => {
+        setIsChatOpen(true);
+        applyUiLabBodyLock();
+      },
+      onChatClosed: () => {
+        setIsChatOpen(false);
+        // Host cleanup: closing the widget must not leave overflow / pointer-events stuck.
+        clearUiLabBodyLock();
+      },
+    };
+  }, [widgetConfigSignature]);
 
   useEffect(() => {
-    document.body.classList.add('ui-lab-body-lock');
-    document.documentElement.classList.add('ui-lab-body-lock');
+    applyUiLabBodyLock();
+
+    const clearIfLeftLab = () => {
+      if (!window.location.hash.startsWith('#/ui-lab')) {
+        clearUiLabBodyLock();
+      }
+    };
+    window.addEventListener('hashchange', clearIfLeftLab);
+    window.addEventListener('pagehide', clearUiLabBodyLock);
 
     return () => {
-      document.body.classList.remove('ui-lab-body-lock');
-      document.documentElement.classList.remove('ui-lab-body-lock');
+      window.removeEventListener('hashchange', clearIfLeftLab);
+      window.removeEventListener('pagehide', clearUiLabBodyLock);
+      clearUiLabBodyLock();
     };
   }, []);
 
@@ -987,6 +1025,12 @@ export function UiLabPage() {
 
     DerinChat.destroy(INSTANCE_ID);
     DerinChat.init(config);
+    setIsChatOpen(!!state.behavior.openOnLoad);
+    if (state.behavior.openOnLoad) {
+      applyUiLabBodyLock();
+    } else {
+      clearUiLabBodyLock();
+    }
     applyLabPreviewStyles(state.viewport);
     if (initialMessages.length > 0) {
       window.setTimeout(() => {
@@ -1001,7 +1045,9 @@ export function UiLabPage() {
       window.scrollTo(scrollState.windowX, 0);
     });
 
-    return () => DerinChat.destroy(INSTANCE_ID);
+    return () => {
+      DerinChat.destroy(INSTANCE_ID);
+    };
   }, [config, initialMessages]);
 
   useEffect(() => {
@@ -1275,6 +1321,14 @@ export function UiLabPage() {
         </div>
 
         <div class={`ui-lab-preview-stage is-${state.viewport}`}>
+          {!isChatOpen && (
+            <div class="ui-lab-preview-placeholder" aria-live="polite">
+              <div class="ui-lab-preview-placeholder-card">
+                <strong>Widget closed</strong>
+                <p>Use the launcher button to reopen the preview.</p>
+              </div>
+            </div>
+          )}
           <div id="ui-lab-widget-mount" />
         </div>
 
