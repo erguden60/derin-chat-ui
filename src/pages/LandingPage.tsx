@@ -97,7 +97,7 @@ const codeExamples = {
   },
   html: {
     title: 'index.html',
-    code: `<span class="tok-tag">&lt;script</span> <span class="tok-attr">src</span>=<span class="tok-str">"https://unpkg.com/derin-chat-ui/dist/index.umd.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
+    code: `<span class="tok-tag">&lt;script</span> <span class="tok-attr">src</span>=<span class="tok-str">"https://unpkg.com/derin-chat-ui@1.0.13/dist/index.umd.js"</span><span class="tok-tag">&gt;&lt;/script&gt;</span>
 <span class="tok-tag">&lt;script&gt;</span>
   window.DerinChat.<span class="tok-fn">init</span>({
     <span class="tok-attr">mock</span>: <span class="tok-val">true</span>,
@@ -317,7 +317,7 @@ export function LandingPage() {
         </div>
         <div class="stat-card reveal-card">
           <div class="stat-label">Engine</div>
-          <div class="stat-value">Preact 10+</div>
+          <div class="stat-value">Bundled Preact</div>
         </div>
         <div class="stat-card reveal-card">
           <div class="stat-label">Size</div>
