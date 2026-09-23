@@ -978,7 +978,7 @@ function generateCode(state: LabState, tab: FrameworkTab) {
     return `import DerinChat from 'derin-chat-ui';\n\nconst chatConfig = ${json};\n\nDerinChat.init(chatConfig);`;
   }
 
-  return `<script src="https://unpkg.com/derin-chat-ui/dist/index.umd.js"></script>\n<script>\n  window.DerinChat.init(${json.replace(/\n/g, '\n  ')});\n</script>`;
+  return `<script src="https://unpkg.com/derin-chat-ui@1.0.13/dist/index.umd.js"></script>\n<script>\n  window.DerinChat.init(${json.replace(/\n/g, '\n  ')});\n</script>`;
 }
 
 function getWidgetConfigSignature(state: LabState) {
